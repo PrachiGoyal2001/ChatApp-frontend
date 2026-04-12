@@ -1,20 +1,30 @@
+import MainLayout from "../layouts/MainLayout.vue";
+import IndexPage from "../pages/IndexPage.vue";
+import LoginPage from "../pages/LoginPage.vue";
+import RegisterPage from "../pages/RegisterPage.vue";
+import selectedUserPage from "../pages/selectedUserPage.vue";
+
 const routes = [
   {
     path: "/",
-    component: () => import("layouts/MainLayout.vue"),
+    component: MainLayout,
     children: [
-      { path: "", component: () => import("pages/IndexPage.vue") },
-      {
-        path: "/login",
-        component: () => import("pages/LoginPage.vue"),
-      },
-      {
-        path: "/register",
-        component: () => import("pages/RegisterPage.vue"),
+      { path: "", 
+        component: IndexPage,
+        children:[
+          { path: ":userId", component: selectedUserPage },
+        ]
       },
     ],
   },
-
+  {
+    path: "/login",
+    component: LoginPage,
+  },
+  {
+    path: "/register",
+    component: RegisterPage,
+  },
   // Always leave this as last one,
   // but you can also remove it
   {

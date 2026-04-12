@@ -1,76 +1,64 @@
 <template>
-  <q-page class="flex flex-center bg-grey-2 q-pa-md">
-    <div class="column bg-white rounded-borders shadow-2 w-100 q-pa-lg" style="max-width: 400px">
-      <h5 class="text-center q-mb-lg">Register</h5>
-
-      <q-input
-        v-model="username"
-        label="Username"
-        outlined
-        dense
-        rounded
-        class="q-mb-md"
-      />
-
-      <q-input
-        v-model="password"
-        label="Password"
-        type="password"
-        outlined
-        dense
-        rounded
-        class="q-mb-md"
-      />
-
-      <q-btn
-        label="Register"
-        color="primary"
-        rounded
-        unelevated
-        class="full-width q-mt-md"
-        @click="register"
-      />
-
-      <div class="text-caption text-center q-mt-md">
-        Already have an account?
-        <router-link to="/login" class="text-primary">Login</router-link>
-      </div>
-    </div>
-  </q-page>
+  <div class="auth-page">
+    <RegisterForm form-type="register" @submit="register" />
+  </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
+import RegisterForm from "../components/RegisterForm.vue";
+import { registerApi } from "../api/authApi"; // ✅ API layer
+import { useAuthStore } from "../stores/auth";
 
+const router = useRouter();
 const $q = useQuasar();
-console.log($q)
-const username = ref("");
-const password = ref("");
+const authStore = useAuthStore();
 
-const register = async () => {
-  if (!username.value || !password.value) {
-    $q.notify({ type: "negative",  position: 'top-right', message: "Please fill all fields" });
-    return;
+const register = async ({ username, password, email }) => {
+  // ✅ Validation
+  if (!username || !password || !email) {
+    return $q.notify({
+      type: "negative",
+      message: "Please fill all fields",
+    });
   }
 
   try {
-    // Example API call to backend
-    const response = await fetch("http://localhost:3000/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username.value, password: password.value }),
+    const { data } = await registerApi({
+      username,
+      password,
+      email,
     });
 
-    if (response.ok) {
-      $q.notify({ type: "positive",  position: 'top-right', message: "Registration successful" });
-    } else {
-      const error = await response.json();
-      $q.notify({ type: "negative",  position: 'top-right', message: error.message || "Registration failed" });
-    }
+    // ✅ optional: store credentials for auto-fill login
+    authStore.setCredentials({ username, password });
+
+    $q.notify({
+      type: "positive",
+      message: data.message || "Registration successful",
+    });
+
+    router.push("/login");
   } catch (err) {
-    console.log(err);
-    $q.notify({ type: "negative",  position: 'top-right', message: "Error" });
+    $q.notify({
+      type: "negative",
+      message:
+        err.response?.data?.message || "Registration failed",
+    });
   }
 };
 </script>
+
+<style scoped>
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: #e2e8f0;
+}
+</style>
