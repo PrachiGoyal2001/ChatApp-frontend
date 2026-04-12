@@ -2,7 +2,7 @@ import MainLayout from "../layouts/MainLayout.vue";
 import IndexPage from "../pages/IndexPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import RegisterPage from "../pages/RegisterPage.vue";
-import selectedUserPage from "../pages/selectedUserPage.vue";
+import SelectedUserPage from "../pages/SelectedUserPage.vue";
 
 const routes = [
   {
@@ -12,7 +12,7 @@ const routes = [
       { path: "", 
         component: IndexPage,
         children:[
-          { path: ":userId", component: selectedUserPage },
+          { path: ":userId", component: SelectedUserPage },
         ]
       },
     ],
