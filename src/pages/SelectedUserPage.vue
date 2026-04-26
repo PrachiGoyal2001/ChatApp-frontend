@@ -15,24 +15,31 @@
         <div class="text-subtitle1 text-grey text-bold">
           {{ getSelectedUsername }}
         </div>
+        <div class="text-subtitle2 text-grey text-bold" v-if="isTyping">
+          Typing...
+        </div>
+        <div class="text-subtitle3 text-grey text-bold" v-if="!isTyping">
+          <div v-if="isSelectedUserOnline">Online</div>
+          <div v-else>Last Seen Recently</div>
+        </div>
       </div>
     </div>
     <div id="messages" class="col q-pa-md chat-box" style="overflow-y: auto">
       <div
         v-for="(msg, index) in messages"
-        :key="index"
+        :key="msg._id || index"
         class="q-mb-sm"
         :class="
-          msg.senderId._id === loggedInUserId
+          msg.sender === loggedInUserId
             ? 'flex justify-end'
             : 'flex justify-start'
         "
       >
         <div
           class="chat-bubble"
-          :class="msg.senderId._id === loggedInUserId ? 'sent' : 'received'"
+          :class="msg.sender === loggedInUserId ? 'sent' : 'received'"
         >
-          {{ msg.content }}
+          {{ msg.text }}
         </div>
       </div>
     </div>
@@ -49,6 +56,7 @@
         rounded
         class="col input-field"
         @keyup.enter="handleSend"
+        @update:model-value="handleTyping(conversationId, selectedUserId)"
       />
       <q-btn round icon="send" class="send-btn" @click="handleSend" />
     </div>
@@ -56,69 +64,113 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from "vue";
-import { useRoute } from "vue-router";
+import { ref, watch, computed, nextTick } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
-import { getMessagesApi } from "../api/messageApi";
+import { useChatStore } from "../stores/chat";
+import { getMessagesApi, markAsReadApi } from "../api/messagesApi";
 import { useSocket } from "../composables/useSocket";
 
-const route = useRoute();
+const {
+  sendMessage,
+  // onMessage,
+  handleTyping,
+  joinConversation,
+  onlineUsers,
+  isTyping,
+} = useSocket();
+
 const auth = useAuthStore();
 const userStore = useUserStore();
-const messages = ref([]);
+const chatStore = useChatStore();
+
 const userMessage = ref("");
-const { sendMessage, onMessage } = useSocket();
 
-const getSelectedUsername = computed(() => userStore.getSelectedUsername);
 const loggedInUserId = computed(() => auth.userId);
+const conversationId = computed(() => userStore.conversationId);
+const selectedUserId = computed(() => userStore.selectedUserId);
+const getSelectedUsername = computed(() => userStore.getSelectedUsername);
+const isSelectedUserOnline = computed(() => {
+  return onlineUsers.value.has(selectedUserId.value);
+});
+const messages = computed(() => {
+  return chatStore.messages[conversationId.value] || [];
+});
 
+// ✅ Fetch messages
 const fetchMessages = async () => {
-  const { data } = await getMessagesApi(route.params.userId);
-  messages.value = data;
+  try {
+    if (!conversationId.value) return;
+
+    const { data } = await getMessagesApi(conversationId.value);
+    chatStore.setMessages(conversationId.value, data);
+
+    await scrollToBottom();
+  } catch (err) {
+    console.error("Fetch messages error:", err);
+  }
 };
 
-const handleSend = () => {
+// ✅ Scroll helper
+const scrollToBottom = async () => {
+  await nextTick();
+  const el = document.getElementById("messages");
+  if (el) el.scrollTop = el.scrollHeight;
+};
+
+// ✅ Send message
+const handleSend = async () => {
   if (!userMessage.value.trim()) return;
+
+  const text = userMessage.value;
 
   sendMessage({
     type: "private_message",
-    from: auth.userId,
-    to: route.params.userId,
-    message: userMessage.value,
+    from: loggedInUserId.value,
+    to: selectedUserId.value,
+    message: text,
   });
 
+  chatStore.addMessage(conversationId.value, {
+    _id: Date.now(),
+    text,
+    sender: loggedInUserId.value,
+  });
+
+  // update sidebar
   userStore.updateLastMessage({
-    userId: route.params.userId,
-    message: userMessage.value,
+    userId: selectedUserId.value, // The one who will receive
+    message: text,
     time: new Date(),
   });
 
-  messages.value.push({
-    content: userMessage.value,
-    senderId: { _id: auth.userId },
-  });
   userMessage.value = "";
+
+  await scrollToBottom();
 };
 
-onMounted(async () => {
-  onMessage((data) => {
-    messages.value.push({
-      content: data.message,
-      senderId: { _id: data.from },
-    });
-  });
-});
-
+// ✅ Watch conversation change
 watch(
-  () => route.params.userId,
-  async (newUserId) => {
-    if (!newUserId) return;
+  () => conversationId.value,
+  async (id) => {
+    if (!id) return;
 
-    await userStore.setSelectedUser(newUserId);
     await fetchMessages();
+
+    // mark messages as read
+    await markAsReadApi({
+      conversationId: id,
+    });
+    joinConversation(id);
   },
-  { immediate: true }
+  { immediate: true },
+);
+// ✅ Auto scroll when messages change (important)
+watch(
+  () => messages.value.length,
+  async () => {
+    await scrollToBottom();
+  }
 );
 </script>
 

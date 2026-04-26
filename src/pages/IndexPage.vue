@@ -23,26 +23,38 @@
               clickable
               v-ripple
               class="user-item"
-              :class="{ active: route.params.userId === user._id }"
+              :class="{ active: route.params.userId === user.otherUser?._id }"
               @click="selectUser(user)"
             >
               <q-item-section avatar>
                 <q-avatar size="32px" class="avatar" text-color="white">
-                  {{ user.username.charAt(0).toUpperCase() }}
+                  {{ user.otherUser?.username?.charAt(0)?.toUpperCase() }}
                 </q-avatar>
               </q-item-section>
               <q-item-section>
                 <q-item-label class="text-body2">
-                  {{ user.username }}
+                  {{ user.otherUser.username }}
                 </q-item-label>
                 <q-item-label class="text-body2" v-if="user.lastMessage">
-                  {{ user.lastMessage.content }}
+                  {{ user.lastMessage?.text }}
                 </q-item-label>
               </q-item-section>
               <q-item-section side top v-if="user.lastMessage">
                 <q-item-label caption class="text-grey-6">
-                  {{ formatTime(user.lastMessage.time) }}
+                  {{ formatTime(user.lastMessage?.createdAt) }}
                 </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-badge
+                  v-if="
+                    user.unreadCount > 0 &&
+                    route.params.userId != user.otherUser._id
+                  "
+                  color="red"
+                  floating
+                >
+                  {{ user.unreadCount }}
+                </q-badge>
               </q-item-section>
             </q-item>
           </q-list>
@@ -66,17 +78,13 @@
 <script setup>
 import { onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
 import { getUsersApi } from "../api/userApi";
-import { useSocket } from "../composables/useSocket";
 
 const router = useRouter();
 const route = useRoute();
 
-const authStore = useAuthStore();
 const userStore = useUserStore();
-const { onMessage } = useSocket();
 
 const users = computed(() => userStore.users);
 
@@ -110,8 +118,8 @@ const formatTime = (time) => {
 // ✅ Fetch users from API layer
 const fetchUsers = async () => {
   try {
-    const { data } = await getUsersApi()
-    userStore.setUsers(data.filter((u) => u._id !== authStore.userId));
+    const { data } = await getUsersApi();
+    userStore.setUsers(data);
   } catch (err) {
     console.error("Error fetching users:", err);
   }
@@ -119,22 +127,27 @@ const fetchUsers = async () => {
 
 // ✅ Select user
 const selectUser = async (user) => {
-  await userStore.setSelectedUser(user._id);
-  router.push(`/${user._id}`);
+  await userStore.setSelectedUser({
+    userId: user.otherUser._id,
+    conversationId: user._id,
+  });
+  router.push(`/${user.otherUser._id}`);
+  userStore.updateMessagesCount(user.otherUser._id);
 };
 
 // ✅ Lifecycle
 onMounted(async () => {
   await fetchUsers();
 
-  // Listen to socket messages instead of window events
-  onMessage((data) => {
-    userStore.updateLastMessage({
-      userId: data.from,
-      message: data.message,
-      time: data.createdAt,
-    });
-  });
+  if (route.params.userId) {
+    const selected = users.value.find(
+      (user) => user.otherUser._id === route.params.userId,
+    );
+
+    if (selected) {
+      selectUser(selected);
+    }
+  }
 });
 </script>
 

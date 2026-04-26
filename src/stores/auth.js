@@ -1,17 +1,20 @@
 import { defineStore } from "pinia";
-import {
-  checkAuthApi,
-  logoutApi,
-} from "../api/authApi";
+import { checkAuthApi, logoutApi } from "../api/authApi";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     userId: null,
-     credentials: {
+    credentials: {
       username: "",
       password: "",
     },
   }),
+
+  getters: {
+    getLoggedInUserId() {
+      return this.userId;
+    },
+  },
 
   actions: {
     async checkAuth() {
@@ -30,7 +33,7 @@ export const useAuthStore = defineStore("auth", {
       await logoutApi();
       this.userId = null;
     },
-    
+
     setCredentials(data) {
       this.credentials = data;
     },
