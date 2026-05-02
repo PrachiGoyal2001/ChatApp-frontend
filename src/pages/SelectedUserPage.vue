@@ -64,25 +64,21 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, nextTick } from "vue";
+import { ref, watch, computed } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
-import { useChatStore } from "../stores/chat";
-import { getMessagesApi, markAsReadApi } from "../api/messagesApi";
 import { useSocket } from "../composables/useSocket";
+import {scrollToBottom} from "../utils";
 
 const {
   sendMessage,
-  // onMessage,
   handleTyping,
-  joinConversation,
   onlineUsers,
   isTyping,
 } = useSocket();
 
 const auth = useAuthStore();
 const userStore = useUserStore();
-const chatStore = useChatStore();
 
 const userMessage = ref("");
 
@@ -90,33 +86,8 @@ const loggedInUserId = computed(() => auth.userId);
 const conversationId = computed(() => userStore.conversationId);
 const selectedUserId = computed(() => userStore.selectedUserId);
 const getSelectedUsername = computed(() => userStore.getSelectedUsername);
-const isSelectedUserOnline = computed(() => {
-  return onlineUsers.value.has(selectedUserId.value);
-});
-const messages = computed(() => {
-  return chatStore.messages[conversationId.value] || [];
-});
-
-// ✅ Fetch messages
-const fetchMessages = async () => {
-  try {
-    if (!conversationId.value) return;
-
-    const { data } = await getMessagesApi(conversationId.value);
-    chatStore.setMessages(conversationId.value, data);
-
-    await scrollToBottom();
-  } catch (err) {
-    console.error("Fetch messages error:", err);
-  }
-};
-
-// ✅ Scroll helper
-const scrollToBottom = async () => {
-  await nextTick();
-  const el = document.getElementById("messages");
-  if (el) el.scrollTop = el.scrollHeight;
-};
+const isSelectedUserOnline = computed(() => onlineUsers.value.has(selectedUserId.value));
+const messages = computed(() => userStore.messages || []);
 
 // ✅ Send message
 const handleSend = async () => {
@@ -131,7 +102,7 @@ const handleSend = async () => {
     message: text,
   });
 
-  chatStore.addMessage(conversationId.value, {
+  userStore.addMessage({
     _id: Date.now(),
     text,
     sender: loggedInUserId.value,
@@ -139,7 +110,7 @@ const handleSend = async () => {
 
   // update sidebar
   userStore.updateLastMessage({
-    userId: selectedUserId.value, // The one who will receive
+    userId: selectedUserId.value,
     message: text,
     time: new Date(),
   });
@@ -149,23 +120,6 @@ const handleSend = async () => {
   await scrollToBottom();
 };
 
-// ✅ Watch conversation change
-watch(
-  () => conversationId.value,
-  async (id) => {
-    if (!id) return;
-
-    await fetchMessages();
-
-    // mark messages as read
-    await markAsReadApi({
-      conversationId: id,
-    });
-    joinConversation(id);
-  },
-  { immediate: true },
-);
-// ✅ Auto scroll when messages change (important)
 watch(
   () => messages.value.length,
   async () => {

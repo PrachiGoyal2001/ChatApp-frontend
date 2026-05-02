@@ -9,21 +9,20 @@ const routes = [
     path: "/",
     component: MainLayout,
     children: [
-      { path: "", 
+      {
+        path: "",
         component: IndexPage,
-        children:[
-          { path: ":userId", component: SelectedUserPage },
-        ]
+        children: [{ path: ":userId", component: SelectedUserPage }],
+      },
+      {
+        path: "/login",
+        component: LoginPage,
+      },
+      {
+        path: "/register",
+        component: RegisterPage,
       },
     ],
-  },
-  {
-    path: "/login",
-    component: LoginPage,
-  },
-  {
-    path: "/register",
-    component: RegisterPage,
   },
   // Always leave this as last one,
   // but you can also remove it

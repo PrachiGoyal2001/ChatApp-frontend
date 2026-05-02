@@ -1,13 +1,9 @@
 import { defineStore } from "pinia";
-import { checkAuthApi, logoutApi } from "../api/authApi";
+import * as authService from "../services/authService";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     userId: null,
-    credentials: {
-      username: "",
-      password: "",
-    },
   }),
 
   getters: {
@@ -21,21 +17,30 @@ export const useAuthStore = defineStore("auth", {
       if (this.userId) return this.userId;
 
       try {
-        const { data } = await checkAuthApi();
+        const { data } = await authService.checkAuth();
         this.userId = data.user || null;
         return this.userId;
       } catch {
         this.userId = null;
       }
     },
-
-    async logout() {
-      await logoutApi();
-      this.userId = null;
+    async login(credentials) {
+      const data = await authService.login({
+        username: credentials.username,
+        password: credentials.password,
+      });
+      return data;
     },
-
-    setCredentials(data) {
-      this.credentials = data;
+    async register(credentials) {
+      const data = await authService.register({
+        username: credentials.username,
+        password: credentials.password,
+        email: credentials.email,
+      });
+      return data;
+    },
+    async logout() {
+      await authService.logout();
     },
   },
 });

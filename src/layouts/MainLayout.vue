@@ -11,6 +11,7 @@
           icon="logout"
           @click="logout"
           class="logout-btn"
+          v-if="!isAuthPage"
         >
           <q-tooltip>Logout</q-tooltip>
         </q-btn>
@@ -23,34 +24,22 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from "vue";
+import {computed} from "vue";
+import {useRoute} from "vue-router";
 import { useAuthStore } from "../stores/auth";
-import { useRouter } from "vue-router";
 import { useSocket } from "../composables/useSocket";
-import { useUserStore } from "../stores/user";
 
-const { connect, disconnect, onMessage } = useSocket();
-const auth = useAuthStore();
-const userStore = useUserStore();
-const router = useRouter();
-let unsubscribe;
+const { disconnect } = useSocket();
+const authStore = useAuthStore();
+const route = useRoute();
+
+const isAuthPage =computed(()=>["/register","/login"].includes(route.path)); 
 
 const logout = async () => {
-  await auth.logout();
+  await authStore.logout();
   disconnect();
-  router.push("/login");
+  window.location.href="/login";
 };
-onMounted(() => {
-  if (auth.userId) {
-    connect(auth.userId);
-    unsubscribe = onMessage((data) => {
-      userStore.handleIncomingMessage(data);
-    });
-  }
-});
-onUnmounted(() => {
-  unsubscribe && unsubscribe();
-});
 </script>
 
 <style scoped>

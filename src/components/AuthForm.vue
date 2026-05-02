@@ -4,7 +4,7 @@
 
     <form @submit.prevent="handleSubmit">
       <q-input
-        v-model="form.username"
+        v-model="credentials.username"
         label="Username"
         outlined
         dense
@@ -14,7 +14,7 @@
 
       <q-input
         v-if="formType === 'register'"
-        v-model="form.email"
+        v-model="credentials.email"
         label="Email"
         type="email"
         outlined
@@ -24,7 +24,7 @@
       />
 
       <q-input
-        v-model="form.password"
+        v-model="credentials.password"
         label="Password"
         type="password"
         outlined
@@ -60,54 +60,29 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from "vue";
+import { ref, computed } from "vue";
+
+const credentials = ref({});
 
 const props = defineProps({
   formType: {
     type: String,
     default: "login",
   },
-  initialValues: {
-    type: Object,
-    default: () => ({
-      username: "",
-      email: "",
-      password: "",
-    }),
-  },
 });
 
 const emit = defineEmits(["submit"]);
 
-// ✅ Reactive form state
-const form = reactive({
-  username: "",
-  email: "",
-  password: "",
-});
-
-// ✅ Title
 const formTitle = computed(() =>
   props.formType.charAt(0).toUpperCase() + props.formType.slice(1)
 );
 
-// ✅ Sync initial values (instead of calling function manually ❌)
-watch(
-  () => props.initialValues,
-  (val) => {
-    Object.assign(form, val);
-  },
-  { immediate: true }
-);
-
-// ✅ Submit
 const handleSubmit = () => {
-  emit("submit", { ...form }); // spread to avoid mutation
+  emit("submit", credentials.value);
 };
 </script>
 
 <style scoped>
-/* Card (Glass effect) */
 .auth-card {
   width: 100%;
   max-width: 420px;

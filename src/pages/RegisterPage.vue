@@ -1,23 +1,21 @@
 <template>
   <div class="auth-page">
-    <RegisterForm form-type="register" @submit="register" />
+    <AuthForm form-type="register" @submit="register" />
   </div>
 </template>
 
 <script setup>
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
-import RegisterForm from "../components/RegisterForm.vue";
-import { registerApi } from "../api/authApi"; // ✅ API layer
+import AuthForm from "../components/AuthForm.vue";
 import { useAuthStore } from "../stores/auth";
 
 const router = useRouter();
 const $q = useQuasar();
 const authStore = useAuthStore();
 
-const register = async ({ username, password, email }) => {
-  // ✅ Validation
-  if (!username || !password || !email) {
+const register = async (credentials) => {
+  if (!credentials.username || !credentials.password || !credentials.email) {
     return $q.notify({
       type: "negative",
       message: "Please fill all fields",
@@ -25,21 +23,14 @@ const register = async ({ username, password, email }) => {
   }
 
   try {
-    const { data } = await registerApi({
-      username,
-      password,
-      email,
-    });
-
-    // ✅ optional: store credentials for auto-fill login
-    authStore.setCredentials({ username, password });
+    const { data } = await authStore.register(credentials);
 
     $q.notify({
       type: "positive",
       message: data.message || "Registration successful",
     });
 
-    router.push("/login");
+    router.push("/");
   } catch (err) {
     $q.notify({
       type: "negative",
