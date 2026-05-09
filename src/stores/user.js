@@ -78,6 +78,7 @@ export const useUserStore = defineStore("user", {
           _id: data._id,
           text: data.text,
           sender: data.sender,
+          files: data.files,
         });
         messageService.markAsRead({
           conversationId: this.conversationId,
@@ -88,7 +89,7 @@ export const useUserStore = defineStore("user", {
       }
       this.updateLastMessage({
         userId: otherUserId,
-        message: data.text,
+        message: data.text || (data.files.length && data.files[data.files.length-1].fileName),
         time: data.createdAt,
       });
     },

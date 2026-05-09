@@ -24,30 +24,103 @@
         </div>
       </div>
     </div>
-    <div id="messages" class="col q-pa-md chat-box" style="overflow-y: auto">
-      <div
-        v-for="(msg, index) in messages"
-        :key="msg._id || index"
-        class="q-mb-sm"
-        :class="
-          msg.sender === loggedInUserId
-            ? 'flex justify-end'
-            : 'flex justify-start'
-        "
-      >
+    <div class="messages-wrapper">
+      <div id="messages" class="col q-pa-md chat-box">
         <div
-          class="chat-bubble"
-          :class="msg.sender === loggedInUserId ? 'sent' : 'received'"
+          v-for="(msg, index) in messages"
+          :key="msg._id || index"
+          class="q-mb-sm"
+          :class="
+            msg.sender === loggedInUserId
+              ? 'flex justify-end'
+              : 'flex justify-start'
+          "
         >
-          {{ msg.text }}
+          <div
+            class="chat-bubble"
+            :class="msg.sender === loggedInUserId ? 'sent' : 'received'"
+          >
+            <!-- Attachments -->
+            <div v-if="msg.files?.length" class="attachments-container">
+              <div
+                v-for="(fileItem, fileIndex) in msg.files"
+                :key="fileIndex"
+                class="attachment-item"
+              >
+                <!-- IMAGE -->
+                <img
+                  v-if="fileItem.fileType?.startsWith('image/')"
+                  :src="fileItem.url"
+                  class="chat-image"
+                />
+
+                <!-- VIDEO -->
+                <video
+                  v-else-if="fileItem.fileType?.startsWith('video/')"
+                  controls
+                  class="chat-video"
+                >
+                  <source :src="fileItem.url" :type="fileItem.fileType" />
+                </video>
+
+                <!-- AUDIO -->
+                <audio
+                  v-else-if="fileItem.fileType?.startsWith('audio/')"
+                  controls
+                  class="chat-audio"
+                >
+                  <source :src="fileItem.url" :type="fileItem.fileType" />
+                </audio>
+
+                <!-- OTHER FILE -->
+                <a
+                  v-else
+                  :href="fileItem.url"
+                  target="_blank"
+                  class="file-link"
+                >
+                  📄 {{ fileItem.fileName }}
+                </a>
+              </div>
+            </div>
+
+            <!-- Text -->
+            <div v-if="msg.text" class="message-text">
+              {{ msg.text }}
+            </div>
+          </div>
         </div>
       </div>
+      <AttachmentPreview
+        v-if="selectedFiles.length"
+        :files="selectedFiles"
+        @close="selectedFiles = []"
+        @add-more="openFilePicker"
+        @remove-file="removeSelectedFile"
+      />
     </div>
 
     <div
       class="row items-center q-pa-sm input-box"
       style="border-top: 1px solid rgba(255, 255, 255, 0.08)"
     >
+      <!-- Hidden File Input -->
+      <q-file
+        v-model="selectedFiles"
+        ref="filePicker"
+        multiple
+        append
+        style="display: none"
+        @update:model-value="handleFileSelect"
+      />
+      <!-- File Button -->
+      <q-btn
+        round
+        flat
+        icon="attach_file"
+        class="q-mr-sm"
+        @click="openFilePicker"
+      />
       <q-input
         v-model="userMessage"
         placeholder="Type a message..."
@@ -67,64 +140,103 @@
 import { ref, watch, computed } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
+import { useUploadStore } from "../stores/upload";
 import { useSocket } from "../composables/useSocket";
-import {scrollToBottom} from "../utils";
+import { scrollToBottom } from "../utils";
+import AttachmentPreview from "../components/AttachmentPreview.vue";
 
-const {
-  sendMessage,
-  handleTyping,
-  onlineUsers,
-  isTyping,
-} = useSocket();
+const { sendMessage, handleTyping, onlineUsers, isTyping } = useSocket();
 
 const auth = useAuthStore();
 const userStore = useUserStore();
+const uploadStore = useUploadStore();
 
 const userMessage = ref("");
+const selectedFiles = ref([]);
+const filePicker = ref(null);
 
 const loggedInUserId = computed(() => auth.userId);
 const conversationId = computed(() => userStore.conversationId);
 const selectedUserId = computed(() => userStore.selectedUserId);
 const getSelectedUsername = computed(() => userStore.getSelectedUsername);
-const isSelectedUserOnline = computed(() => onlineUsers.value.has(selectedUserId.value));
+const isSelectedUserOnline = computed(() =>
+  onlineUsers.value.has(selectedUserId.value),
+);
 const messages = computed(() => userStore.messages || []);
+
+const openFilePicker = () => {
+  filePicker.value.pickFiles();
+};
+
+// Only store selected file
+const handleFileSelect = async (files) => {
+  if (!files || !files.length) return;
+
+  selectedFiles.value = [...files];
+};
+
+const removeSelectedFile = (index) => {
+  selectedFiles.value.splice(index, 1);
+};
 
 // ✅ Send message
 const handleSend = async () => {
-  if (!userMessage.value.trim()) return;
+  if (!userMessage.value.trim() && !selectedFiles.value.length)return;
 
   const text = userMessage.value;
 
+try {
+  let uploadedFiles = [];
+
+  // upload files first
+  if (selectedFiles.value.length) {
+    const formData = new FormData();
+
+    selectedFiles.value.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    const { data } = await uploadStore.uploadAttachment(formData);
+
+    uploadedFiles = data.files || [];
+  }
+  console.log("uploadedFiles", uploadedFiles);
   sendMessage({
     type: "private_message",
     from: loggedInUserId.value,
     to: selectedUserId.value,
     message: text,
+    files: uploadedFiles,
   });
 
   userStore.addMessage({
     _id: Date.now(),
     text,
     sender: loggedInUserId.value,
+    files: uploadedFiles,
   });
 
   // update sidebar
   userStore.updateLastMessage({
     userId: selectedUserId.value,
-    message: text,
+    message: text || (uploadedFiles.length && uploadedFiles[uploadedFiles.length-1].fileName),
     time: new Date(),
   });
 
+  selectedFiles.value = [];
   userMessage.value = "";
 
   await scrollToBottom();
+  } catch (err) {
+    console.error("Send failed", err);
+  }
 };
 
 watch(
   () => messages.value.length,
   async () => {
     await scrollToBottom();
-  }
+  },
 );
 </script>
 
@@ -243,5 +355,73 @@ watch(
 .input-field :deep(input:focus) {
   outline: none !important;
   box-shadow: none !important;
+}
+.selected-file {
+  background: rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+}
+.messages-wrapper {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+#messages {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+.attachments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin-bottom: 6px;
+}
+
+.attachment-item {
+  width: 100%;
+}
+
+.chat-image {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 10px;
+  object-fit: cover;
+
+  cursor: pointer;
+}
+
+.chat-video {
+  width: 100%;
+  max-width: 320px;
+
+  border-radius: 10px;
+}
+
+.chat-audio {
+  width: 260px;
+}
+
+.file-link {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 10px 12px;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+  color: white;
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.message-text {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>
