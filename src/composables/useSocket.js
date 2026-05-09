@@ -15,8 +15,8 @@ export const useSocket = () => {
   const connect = (userId) => {
     if (socket) return;
 
-    // socket = io("https://chatapp-backend-v4hm.onrender.com", {
-    socket = io("http://localhost:3000", {
+    socket = io("https://chatapp-backend-v4hm.onrender.com", {
+    // socket = io("http://localhost:3000", {
       withCredentials: true,
       transports: ["websocket"],
       reconnection: true,
