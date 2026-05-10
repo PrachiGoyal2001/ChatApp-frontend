@@ -1,7 +1,19 @@
 import { nextTick } from "vue";
-// ✅ Scroll helper
+
 export const scrollToBottom = async () => {
-  await nextTick();
   const el = document.getElementById("messages");
-  if (el) el.scrollTop = el.scrollHeight;
+
+  if (!el) return;
+  // wait for vue render
+  await nextTick();
+  
+  //wait for browser paint
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.scrollTo({
+        top: el.scrollHeight,
+        behavior: "smooth",
+      });
+    });
+  });
 };

@@ -1,5 +1,8 @@
 <template>
-  <div class="app-bg">
+  <div class="app-bg"   :class="{
+    'app-bg-mobile-chat': $q.screen.lt.md && route.params.userId
+  }"
+ >
     <div class="main-card row">
       <!-- Left Sidebar: Users List -->
 
@@ -7,12 +10,6 @@
         v-if="!$q.screen.lt.md || !route.params.userId"
         class="sidebar col-12 col-md-3"
       >
-        <!-- Sidebar Header -->
-        <div class="header text-center" style="padding: 14px">
-          <q-icon name="people" size="sm" class="q-mr-sm" />
-          Users
-        </div>
-
         <!-- User List -->
         <div class="col">
           <UsersList />
@@ -24,7 +21,7 @@
         v-if="!$q.screen.lt.md || route.params.userId"
         class="col-12 col-md column full-height chat-section"
       >
-        <div class="col" v-if="!route.params.userId">
+        <div class="col right-view" v-if="!route.params.userId">
           Select the user you want to chat with
         </div>
         <router-view class="col full-height" />
@@ -36,7 +33,7 @@
 <script setup>
 import { onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-import {useAuthStore} from "../stores/auth";
+import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
 import UsersList from "../components/UsersList.vue";
 import { useSocket } from "../composables/useSocket";
@@ -63,22 +60,17 @@ onUnmounted(() => {
 
 <style scoped>
 .app-bg {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  height: calc(100vh - 51px);
   background: radial-gradient(circle at 20% 20%, #020617, #020617 80%);
 }
 
 .main-card {
-  width: 95%;
-  height: calc(100vh - 40px);
+  display: flex;
+  height: 100%;
 
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(12px);
 
-  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
@@ -99,5 +91,15 @@ onUnmounted(() => {
 /* Chat Section */
 .chat-section {
   background: transparent;
+}
+.right-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+/* Mobile chat opened */
+.app-bg-mobile-chat {
+  height: 100vh;
 }
 </style>

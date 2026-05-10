@@ -128,7 +128,6 @@ onMounted(async() => {
 .user-item.active {
   background: rgba(34, 197, 94, 0.15);
   border: 1px solid rgba(34, 197, 94, 0.4);
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
 }
 
 /* Username */

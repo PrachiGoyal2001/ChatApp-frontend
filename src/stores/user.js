@@ -3,7 +3,6 @@ import * as userService from "../services/userService";
 import * as messageService from "../services/messagesService";
 import { useAuthStore } from "./auth";
 import { useSocket } from "../composables/useSocket";
-import { scrollToBottom } from "src/utils";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -32,6 +31,7 @@ export const useUserStore = defineStore("user", {
     },
     async openConversation() {
       try {
+        this.messages=[];
         const { joinConversation } = useSocket();
         const { data } = await messageService.fetchMessages(this.conversationId);
         this.messages = data;
@@ -40,7 +40,6 @@ export const useUserStore = defineStore("user", {
           conversationId: this.conversationId,
         });
         this.updateMessagesCount(this.selectedUserId);
-        scrollToBottom();
       } catch (err) {
         console.error("Fetch messages error:", err);
       }

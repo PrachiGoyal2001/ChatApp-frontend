@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf" class="app-bg">
-    <q-header elevated class="header">
+    <q-header elevated class="header" v-if="!($q.screen.lt.md && route.params.userId)">
       <q-toolbar>
         <q-toolbar-title color="white"> Chat App </q-toolbar-title>
         <!-- ✅ Logout Button -->
@@ -47,13 +47,33 @@ const logout = async () => {
   background: radial-gradient(circle at 20% 20%, #020617, #020617 80%);
 }
 .header {
-  color: #94a3b8;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  background: rgba(255, 255, 255, 0.04);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.98),
+    rgba(17, 24, 39, 0.95)
+  );
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #f8fafc;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
+
+.header :deep(.q-toolbar__title) {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #9e9e9e;
+}
+
 .logout-btn {
   color: #94a3b8;
+  transition: all 0.25s ease;
+}
+
+.logout-btn:hover {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+
+  transform: scale(1.05);
 }
 </style>

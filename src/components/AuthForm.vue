@@ -157,7 +157,6 @@ const handleSubmit = () => {
 
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
 }
 
 /* Bottom text */
