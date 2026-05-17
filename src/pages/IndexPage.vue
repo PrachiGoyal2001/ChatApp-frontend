@@ -629,7 +629,7 @@ const cleanupCall = () => {
 }
 /* Mobile chat opened */
 .app-bg-mobile-chat {
-  height: 100vh;
+  height: 100dvh;
 }
 
 .remote-video {
