@@ -1,29 +1,65 @@
 <template>
   <div class="column full-height">
-    <div class="row items-center q-pa-sm chat-header">
-      <q-btn
-        icon="arrow_back"
-        flat
-        dense
-        v-if="$q.screen.lt.md"
-        @click="$router.push('/')"
-      />
-      <q-avatar size="36px" text-color="white" class="chat-icon">
-        <q-icon name="chat" />
-      </q-avatar>
-      <div class="q-ml-sm">
-        <div class="text-subtitle1 text-grey text-bold">
-          {{ getSelectedUsername }}
-        </div>
-        <div class="text-subtitle2 text-grey text-bold" v-if="isTyping">
-          Typing...
-        </div>
-        <div class="text-subtitle3 text-grey text-bold" v-if="!isTyping">
-          <div v-if="isSelectedUserOnline">Online</div>
-          <div v-else>Last Seen Recently</div>
-        </div>
+    <div class="row items-center justify-between q-pa-sm chat-header">
+  <!-- LEFT -->
+  <div class="row items-center no-wrap">
+    <q-btn
+      icon="arrow_back"
+      flat
+      dense
+      round
+      class="back-btn q-mr-sm"
+      v-if="$q.screen.lt.md"
+      @click="$router.push('/')"
+    />
+
+    <q-avatar size="42px" text-color="white" class="chat-icon">
+      <q-icon name="chat" size="20px" />
+    </q-avatar>
+
+    <div class="q-ml-sm user-info">
+      <div class="username">
+        {{ getSelectedUsername }}
+      </div>
+
+      <div class="typing-text" v-if="isTyping">
+        Typing...
+      </div>
+
+      <div class="online-status" v-if="!isTyping">
+        <span v-if="isSelectedUserOnline">Online</span>
+        <span v-else>Last Seen Recently</span>
       </div>
     </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="row items-center q-gutter-xs">
+    <!-- Audio Call -->
+    <q-btn
+      round
+      flat
+      dense
+      icon="call"
+      class="header-action-btn"
+      @click="startAudioCall"
+    >
+      <q-tooltip class="bg-dark">Audio Call</q-tooltip>
+    </q-btn>
+
+    <!-- Video Call -->
+    <q-btn
+      round
+      flat
+      dense
+      icon="videocam"
+      class="header-action-btn"
+      @click="startVideoCall"
+    >
+      <q-tooltip class="bg-dark">Video Call</q-tooltip>
+    </q-btn>
+  </div>
+</div>
     <div class="messages-wrapper">
       <div id="messages" class="col q-pa-md chat-box">
         <div
@@ -150,11 +186,17 @@ import { useSocket } from "../composables/useSocket";
 import { scrollToBottom } from "../utils";
 import AttachmentPreview from "../components/AttachmentPreview.vue";
 
-const { sendMessage, handleTyping, onlineUsers, isTyping } = useSocket();
+const {
+  sendMessage,
+  handleTyping,
+  onlineUsers,
+  isTyping,
+} = useSocket();
 
 const auth = useAuthStore();
 const userStore = useUserStore();
 const uploadStore = useUploadStore();
+const emit = defineEmits(["start-call"]);
 
 const userMessage = ref("");
 const selectedFiles = ref([]);
@@ -169,11 +211,18 @@ const isSelectedUserOnline = computed(() =>
 );
 const messages = computed(() => userStore.messages || []);
 
+const startAudioCall = async () => {
+  emit("start-call", false);
+}
+
+const startVideoCall = async () => {
+  emit("start-call", true);
+}
+
 const openFilePicker = () => {
   filePicker.value.pickFiles();
 };
 
-// Only store selected file
 const handleFileSelect = async (files) => {
   if (!files || !files.length) return;
 
@@ -235,16 +284,29 @@ try {
 };
 
 watch(messages,scrollToBottom,{deep:true});
-
 </script>
 
 <style scoped>
+/* =========================
+   CHAT HEADER
+========================= */
+
 .chat-header {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
+  height: 72px;
+  padding-inline: 14px;
+
+  background: rgba(15, 23, 42, 0.78);
+
+  backdrop-filter: blur(16px);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
+
+/* Avatar */
 
 .chat-icon {
   background: linear-gradient(
@@ -252,6 +314,71 @@ watch(messages,scrollToBottom,{deep:true});
     #22c55e,
     #16a34a
   );
+
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+}
+
+/* User Info */
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.username {
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.typing-text {
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.online-status {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Header Buttons */
+
+.header-action-btn,
+.back-btn {
+  color: #cbd5e1;
+
+  transition: all 0.22s ease;
+}
+
+.header-action-btn:hover,
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+
+  color: #22c55e;
+
+  transform: scale(1.05);
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .chat-header {
+    height: 66px;
+    padding-inline: 10px;
+  }
+
+  .username {
+    font-size: 14px;
+  }
+
+  .header-action-btn {
+    width: 36px;
+    height: 36px;
+  }
 }
 .messages-wrapper {
   position: relative;
@@ -423,10 +550,6 @@ watch(messages,scrollToBottom,{deep:true});
   transition: transform 0.25s ease;
 }
 
-.chat-image:hover {
-  transform: scale(1.02);
-}
-
 .chat-video {
   width: 100%;
   max-width: 320px;
@@ -458,4 +581,5 @@ watch(messages,scrollToBottom,{deep:true});
 .file-link:hover {
   background: rgba(255, 255, 255, 0.12);
 }
+
 </style>
