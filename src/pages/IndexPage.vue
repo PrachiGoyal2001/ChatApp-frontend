@@ -77,6 +77,12 @@
       autoplay
       playsinline
     ></audio>
+    <audio
+      ref="ringtoneAudio"
+      :src="ringtoneUrl"
+      loop
+      preload="auto"
+    ></audio>
   </div>
 </template>
 
@@ -90,6 +96,9 @@ import CallScreen from "src/components/CallScreen.vue";
 import IncomingCallScreen from "src/components/IncomingCallScreen.vue";
 import { useSocket } from "../composables/useSocket";
 import { useWebRtc } from "../services/webrtc";
+import ringtoneUrl from "../assets/audio/ms_teams_ringtone.mp3";
+
+const UNANSWERED_CALL_TIMEOUT = 30000;
 
 const {
   connect,
@@ -131,10 +140,12 @@ const callStatus = ref("Connecting securely...");
 const currentCallData = ref(null);
 const activeCallUserId = ref(null);
 const remoteAudio = ref(null);
+const ringtoneAudio = ref(null);
 const remoteVideo = ref(null);
 const localVideo = ref(null);
 const remoteStream = ref(null);
 const pendingIceCandidates = [];
+let unansweredCallTimer = null;
 
 const selectedUserId = computed(() => userStore.selectedUserId);
 const getSelectedUsername = computed(() => userStore.getSelectedUsername);
@@ -176,10 +187,18 @@ const startCall = async (video = false) => {
     isVideoCall.value = media.videoEnabled;
     isMicMuted.value = false;
     isCameraOff.value = false;
-    callStatus.value = "Connecting securely...";
+    callStatus.value = "Ringing...";
     activeCallUserId.value = selectedUserId.value;
     localStream.value = media.stream;
     showCallScreen.value = true;
+    startRingtone();
+    startUnansweredCallTimer(() => {
+      if (activeCallUserId.value) {
+        endCall({ to: activeCallUserId.value });
+      }
+
+      cleanupCall();
+    });
 
     await nextTick();
     attachLocalStream();
@@ -207,6 +226,7 @@ const startCall = async (video = false) => {
 
   } catch (err) {
     console.error("Call start failed:", err);
+    cleanupCall();
   }
 };
 
@@ -224,6 +244,8 @@ const handleAcceptCall = async () => {
     activeCallUserId.value = currentCallData.value.from;
     showIncomingCall.value = false;
     showCallScreen.value = true;
+    stopRingtone();
+    clearUnansweredCallTimer();
 
     await nextTick();
     attachLocalStream();
@@ -255,8 +277,14 @@ const handleAcceptCall = async () => {
 };
 
 const handleRejectCall = () => {
-  rejectCall({ to: currentCallData.value.from });
+  const to = currentCallData.value?.from;
 
+  if (to) {
+    rejectCall({ to });
+  }
+
+  stopRingtone();
+  clearUnansweredCallTimer();
   showIncomingCall.value = false;
   currentCallData.value = null;
   activeCallUserId.value = null;
@@ -332,15 +360,27 @@ const switchToVideoCall = async () => {
 watch(incomingCall, (data) => {
   if (!data) return;
 
+  cleanupCall();
   currentCallData.value = data;
   activeCallUserId.value = data.from;
   isVideoCall.value = data.isVideoCall;
   showIncomingCall.value = true;
+  startRingtone();
+  startUnansweredCallTimer(() => {
+    if (currentCallData.value?.from) {
+      rejectCall({ to: currentCallData.value.from });
+    }
+
+    cleanupCall();
+  });
 });
 
 watch(callAccepted, async (data) => {
   if (!data || !peerConnection) return;
 
+  stopRingtone();
+  clearUnansweredCallTimer();
+  callStatus.value = "Connecting securely...";
   await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
   await flushPendingIceCandidates();
 });
@@ -538,6 +578,8 @@ const openStreamFromAvailableCamera = async ({ audio, originalError }) => {
 const attachRemoteStream = (stream) => {
   remoteStream.value = stream;
   callStatus.value = "Connected";
+  stopRingtone();
+  clearUnansweredCallTimer();
 
   if (remoteAudio.value) {
     remoteAudio.value.srcObject = stream;
@@ -562,7 +604,37 @@ const applyCameraState = () => {
   });
 };
 
+const startRingtone = () => {
+  if (!ringtoneAudio.value) return;
+
+  ringtoneAudio.value.currentTime = 0;
+  ringtoneAudio.value.play?.().catch((err) => {
+    console.warn("Ringtone playback was blocked by the browser:", err);
+  });
+};
+
+const stopRingtone = () => {
+  if (!ringtoneAudio.value) return;
+
+  ringtoneAudio.value.pause();
+  ringtoneAudio.value.currentTime = 0;
+};
+
+const startUnansweredCallTimer = (callback) => {
+  clearUnansweredCallTimer();
+  unansweredCallTimer = setTimeout(callback, UNANSWERED_CALL_TIMEOUT);
+};
+
+const clearUnansweredCallTimer = () => {
+  if (!unansweredCallTimer) return;
+
+  clearTimeout(unansweredCallTimer);
+  unansweredCallTimer = null;
+};
+
 const cleanupCall = () => {
+  stopRingtone();
+  clearUnansweredCallTimer();
   peerConnection?.close();
   peerConnection = null;
   pendingIceCandidates.length = 0;

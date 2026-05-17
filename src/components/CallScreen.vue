@@ -33,7 +33,7 @@
         </div>
 
         <!-- Name -->
-        <div class="caller-name">
+        <div class="caller-name" v-if="showUserName">
           {{ username }}
         </div>
 
@@ -93,7 +93,8 @@
 </template>
 
 <script setup>
-defineProps({
+import {computed} from "vue";
+const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false,
@@ -135,7 +136,9 @@ defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue', 'end-call', 'switch-to-video', 'toggle-mic', 'toggle-video'])
+const emit = defineEmits(['update:modelValue', 'end-call', 'switch-to-video', 'toggle-mic', 'toggle-video']);
+
+const showUserName = computed(()=>!props.isVideoCall || (props.isVideoCall && props.callStatus!='Connected'))
 
 const endCall = () => {
   emit('end-call')
