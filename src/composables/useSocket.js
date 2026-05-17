@@ -37,7 +37,6 @@ export const useSocket = () => {
     if (socket) return;
 
     socket = io(baseURL, {
-      withCredentials: true,
       transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
