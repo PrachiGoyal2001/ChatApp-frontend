@@ -588,7 +588,7 @@ const cleanupCall = () => {
 
 <style scoped>
 .app-bg {
-  height: calc(100vh - 51px);
+  height: calc(100dvh - 51px);
   position: relative;
   background: radial-gradient(circle at 20% 20%, #020617, #020617 80%);
 }

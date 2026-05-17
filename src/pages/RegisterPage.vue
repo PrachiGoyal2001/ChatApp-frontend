@@ -43,7 +43,7 @@ const register = async (credentials) => {
 
 <style scoped>
 .auth-page {
-  min-height: 100vh;
+  height: calc(100dvh - 51px);
   display: flex;
   justify-content: center;
   align-items: center;

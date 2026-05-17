@@ -37,7 +37,7 @@ const login = async (credentials) => {
 <style scoped>
 /* Background */
 .auth-page {
-  min-height: 100vh;
+  height: calc(100dvh - 51px);
   display: flex;
   justify-content: center;
   align-items: center;
