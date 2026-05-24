@@ -38,45 +38,35 @@
     <div class="preview-footer row items-center no-wrap">
       <!-- Small Preview -->
       <div
-  v-for="(file, index) in files"
-  :key="index"
-  class="thumb-wrapper"
-  :class="{ active: selectedIndex === index }"
->
-  <!-- Remove -->
-  <q-btn
-    icon="close"
-    round
-    dense
-    flat
-    size="8px"
-    class="remove-thumb-btn"
-    @click.stop="$emit('remove-file', index)"
-  />
+        v-for="(file, index) in files"
+        :key="index"
+        class="thumb-wrapper"
+        :class="{ active: selectedIndex === index }"
+      >
+        <!-- Remove -->
+        <q-btn
+          icon="close"
+          round
+          dense
+          flat
+          size="8px"
+          class="remove-thumb-btn"
+          @click.stop="$emit('remove-file', index)"
+        />
 
-  <!-- Select -->
-  <div
-    class="thumb-content"
-    @click="selectFile(index)"
-  >
-    <img
-      v-if="file.type.startsWith('image/')"
-      :src="getPreview(file)"
-      class="thumb-image"
-    />
+        <!-- Select -->
+        <div class="thumb-content" @click="selectFile(index)">
+          <img
+            v-if="file.type.startsWith('image/')"
+            :src="getPreview(file)"
+            class="thumb-image"
+          />
 
-    <div
-      v-else
-      class="thumb-file flex flex-center"
-    >
-      <q-icon
-        name="description"
-        color="white"
-        size="24px"
-      />
-    </div>
-  </div>
-</div>
+          <div v-else class="thumb-file flex flex-center">
+            <q-icon name="description" color="white" size="24px" />
+          </div>
+        </div>
+      </div>
 
       <!-- Add More -->
       <div class="thumb-wrapper add-more" @click="$emit('add-more')">

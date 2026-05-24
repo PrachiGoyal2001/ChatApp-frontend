@@ -313,10 +313,6 @@ const acceptCall = () => {
 
 /* Mobile */
 
-/* =========================
-   MOBILE NOTIFICATION STYLE
-========================= */
-
 @media (max-width: 600px) {
 
   .incoming-call-popup {

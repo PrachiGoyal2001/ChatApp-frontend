@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <!-- 🔵 Chat Section -->
+      <!-- Chat Section -->
       <div
         v-if="!$q.screen.lt.md || route.params.userId"
         class="col-12 col-md column full-height chat-section"

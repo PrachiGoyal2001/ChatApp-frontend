@@ -147,10 +147,6 @@ const endCall = () => {
 </script>
 
 <style scoped>
-/* =========================
-   CALL SCREEN
-========================= */
-
 .call-screen {
   position: absolute;
   inset: 0;

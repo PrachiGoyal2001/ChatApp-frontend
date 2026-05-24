@@ -111,7 +111,7 @@ onMounted(async() => {
 </script>
 
 <style scoped>
-/* 👤 User Item */
+/* User Item */
 .user-item {
   border-radius: 12px;
   margin: 6px;
@@ -124,7 +124,7 @@ onMounted(async() => {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* 🟢 Active User */
+/* Active User */
 .user-item.active {
   background: rgba(34, 197, 94, 0.15);
   border: 1px solid rgba(34, 197, 94, 0.4);

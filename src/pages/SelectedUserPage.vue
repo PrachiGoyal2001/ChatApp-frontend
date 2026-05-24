@@ -236,7 +236,7 @@ const removeSelectedFile = (index) => {
   selectedFiles.value.splice(index, 1);
 };
 
-// ✅ Send message
+// Send message
 const handleSend = async () => {
   if (!userMessage.value.trim() && !selectedFiles.value.length) return;
 
@@ -290,10 +290,6 @@ watch(messages,scrollToBottom,{deep:true});
 </script>
 
 <style scoped>
-/* =========================
-   CHAT HEADER
-========================= */
-
 .chat-header {
   height: 72px;
   padding-inline: 14px;
