@@ -1,7 +1,9 @@
 import MainLayout from "../layouts/MainLayout.vue";
 import IndexPage from "../pages/IndexPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
+import ProfilePage from "../pages/ProfilePage.vue";
 import RegisterPage from "../pages/RegisterPage.vue";
+import SearchPage from "../pages/SearchPage.vue";
 import SelectedUserPage from "../pages/SelectedUserPage.vue";
 
 const routes = [
@@ -21,6 +23,14 @@ const routes = [
       {
         path: "/register",
         component: RegisterPage,
+      },
+      {
+        path: "/profile",
+        component: ProfilePage,
+      },
+      {
+        path: "/search",
+        component: SearchPage,
       },
     ],
   },

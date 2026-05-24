@@ -83,16 +83,22 @@
       loop
       preload="auto"
     ></audio>
+    <DisconnectCallDialog
+      v-model="showDisconnectDialog"
+      @confirm="confirmRouteLeave"
+      @cancel="cancelRouteLeave"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { onBeforeRouteLeave, useRoute } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
 import UsersList from "../components/UsersList.vue";
 import CallScreen from "src/components/CallScreen.vue";
+import DisconnectCallDialog from "src/components/DisconnectCallDialog.vue";
 import IncomingCallScreen from "src/components/IncomingCallScreen.vue";
 import { useSocket } from "../composables/useSocket";
 import { useWebRtc } from "../services/webrtc";
@@ -132,6 +138,7 @@ let peerConnection = null;
 
 const showCallScreen = ref(false);
 const showIncomingCall = ref(false);
+const showDisconnectDialog = ref(false);
 const isVideoCall = ref(false);
 const isSwitchingToVideo = ref(false);
 const isMicMuted = ref(false);
@@ -146,6 +153,7 @@ const localVideo = ref(null);
 const remoteStream = ref(null);
 const pendingIceCandidates = [];
 let unansweredCallTimer = null;
+let pendingRouteLeaveResolver = null;
 
 const selectedUserId = computed(() => userStore.selectedUserId);
 const getSelectedUsername = computed(() => userStore.getSelectedUsername);
@@ -163,6 +171,7 @@ const activeCallName = computed(() => {
   return currentCallData.value ? incomingCallerName.value : getSelectedUsername.value || "Unknown";
 });
 const isCallConnected = computed(() => callStatus.value === "Connected");
+const isCallActive = computed(() => showCallScreen.value);
 
 onMounted(async () => {
   if (authStore.userId) {
@@ -176,6 +185,32 @@ onUnmounted(() => {
   unsubscribe && unsubscribe();
   cleanupCall();
 });
+
+onBeforeRouteLeave(() => {
+  if (!isCallActive.value) return true;
+
+  showDisconnectDialog.value = true;
+
+  return new Promise((resolve) => {
+    pendingRouteLeaveResolver = resolve;
+  });
+});
+
+const confirmRouteLeave = () => {
+  showDisconnectDialog.value = false;
+  handleEndCall();
+  resolvePendingRouteLeave(true);
+};
+
+const cancelRouteLeave = () => {
+  showDisconnectDialog.value = false;
+  resolvePendingRouteLeave(false);
+};
+
+const resolvePendingRouteLeave = (shouldLeave) => {
+  pendingRouteLeaveResolver?.(shouldLeave);
+  pendingRouteLeaveResolver = null;
+};
 
 const startCall = async (video = false) => {
   try {
@@ -711,7 +746,7 @@ const cleanupCall = () => {
   width: 100%;
   height: 100%;
   background: #020617;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .local-video {
@@ -734,6 +769,9 @@ const cleanupCall = () => {
     bottom: 104px;
     width: 34vw;
     max-width: 136px;
+  }
+  .remote-video{
+    object-fit: cover;
   }
 }
 </style>

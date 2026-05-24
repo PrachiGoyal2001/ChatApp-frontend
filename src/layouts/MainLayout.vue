@@ -3,18 +3,24 @@
     <q-header elevated class="header" v-if="!($q.screen.lt.md && route.params.userId)">
       <q-toolbar>
         <q-toolbar-title color="white"> Chat App </q-toolbar-title>
-        <!-- ✅ Logout Button -->
         <q-btn
           round
           dense
           flat
-          icon="logout"
-          @click="logout"
-          class="logout-btn"
+          icon="search"
+          to="/search"
+          class="header-btn"
           v-if="!isAuthPage"
-        >
-          <q-tooltip>Logout</q-tooltip>
-        </q-btn>
+        />
+        <q-btn
+          round
+          dense
+          flat
+          icon="account_circle"
+          to="/profile"
+          class="header-btn"
+          v-if="!isAuthPage"
+        />
       </q-toolbar>
     </q-header>
     <q-page-container>
@@ -24,22 +30,12 @@
 </template>
 
 <script setup>
-import {computed} from "vue";
-import {useRoute} from "vue-router";
-import { useAuthStore } from "../stores/auth";
-import { useSocket } from "../composables/useSocket";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 
-const { disconnect } = useSocket();
-const authStore = useAuthStore();
 const route = useRoute();
 
-const isAuthPage =computed(()=>["/register","/login"].includes(route.path)); 
-
-const logout = async () => {
-  await authStore.logout();
-  disconnect();
-  window.location.href="/login";
-};
+const isAuthPage = computed(() => ["/register", "/login"].includes(route.path));
 </script>
 
 <style scoped>
@@ -65,15 +61,15 @@ const logout = async () => {
   color: #9e9e9e;
 }
 
-.logout-btn {
+.header-btn {
   color: #94a3b8;
   transition: all 0.25s ease;
 }
 
-.logout-btn:hover {
+.header-btn:hover,
+.header-btn.q-router-link--active {
   color: #22c55e;
   background: rgba(34, 197, 94, 0.12);
-
   transform: scale(1.05);
 }
 </style>

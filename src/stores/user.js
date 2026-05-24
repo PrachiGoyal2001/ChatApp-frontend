@@ -23,6 +23,19 @@ export const useUserStore = defineStore("user", {
       const { data } = await userService.fetchUsers();
       this.users = data;
     },
+    addOrUpdateUser(conversation) {
+      const index = this.users.findIndex((user) => user._id === conversation._id);
+
+      if (index === -1) {
+        this.users.unshift(conversation);
+        return;
+      }
+
+      this.users.splice(index, 1, {
+        ...this.users[index],
+        ...conversation,
+      });
+    },
     setSelectedUser(user) {
       this.selectedUserId = user.userId;
       this.conversationId = user.conversationId;

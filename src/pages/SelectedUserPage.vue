@@ -14,7 +14,7 @@
     />
 
     <q-avatar size="42px" text-color="white" class="chat-icon">
-      <q-icon name="chat" size="20px" />
+      {{ selectedUserInitial }}
     </q-avatar>
 
     <div class="q-ml-sm user-info">
@@ -206,6 +206,9 @@ const loggedInUserId = computed(() => auth.userId);
 const conversationId = computed(() => userStore.conversationId);
 const selectedUserId = computed(() => userStore.selectedUserId);
 const getSelectedUsername = computed(() => userStore.getSelectedUsername);
+const selectedUserInitial = computed(() => {
+  return getSelectedUsername.value?.charAt(0)?.toUpperCase() || "?";
+});
 const isSelectedUserOnline = computed(() =>
   onlineUsers.value.has(selectedUserId.value),
 );

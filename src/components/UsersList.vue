@@ -1,5 +1,5 @@
 <template>
-  <q-list separator>
+  <q-list separator class="q-pt-sm">
     <q-item
       v-for="user in users"
       :key="user._id"
