@@ -10,11 +10,11 @@
         @click="router.push('/')"
       />
 
+{{error}}
       <q-card class="profile-card">
         <div v-if="loading" class="profile-state">
           <q-spinner color="positive" size="42px" />
         </div>
-{{error}}
         <div v-else-if="error" class="profile-state">
           <q-icon name="error_outline" size="42px" color="negative" />
           <div class="state-title">Profile unavailable</div>
