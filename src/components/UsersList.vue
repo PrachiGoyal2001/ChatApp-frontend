@@ -1,5 +1,6 @@
 <template>
   <q-list separator class="q-pt-sm">
+    AuthStore{{authStore.userId}} and Token{{authStore.token}}
     <q-item
       v-for="user in users"
       :key="user._id"
@@ -46,10 +47,12 @@
 import { computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "../stores/user";
+import {useAuthStore} from "../stores/auth";
 
 const router = useRouter();
 const route = useRoute();
 const userStore = useUserStore();
+const authStore = useAuthStore();
 
 const users = computed(() => userStore.users);
 
