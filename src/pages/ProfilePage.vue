@@ -10,7 +10,6 @@
         @click="router.push('/')"
       />
 
-{{error}}
       <q-card class="profile-card">
         <div v-if="loading" class="profile-state">
           <q-spinner color="positive" size="42px" />

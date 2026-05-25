@@ -38,8 +38,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore();
 
-    const isLoggedIn = await auth.checkAuth();
-    if (!isLoggedIn && to.path !== "/login" && to.path !== "/register") {
+    if (!auth.token && to.path !== "/login" && to.path !== "/register") {
       next("/login");
     } else {
       next();

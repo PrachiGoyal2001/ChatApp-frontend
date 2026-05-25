@@ -186,7 +186,6 @@ export const useSocket = () => {
      * Incoming Call
      */
     socket.on("incoming_call", (data) => {
-      console.log("incoming call", data);
       incomingCall.value = data;
 
       callRejected.value = null;

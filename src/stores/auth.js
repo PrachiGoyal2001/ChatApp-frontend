@@ -20,8 +20,6 @@ export const useAuthStore = defineStore("auth", {
         return null;
       }
 
-      if (this.userId) return this.userId;
-
       try {
         const { data } = await authService.checkAuth();
         this.userId = data.user || null;
@@ -32,10 +30,7 @@ export const useAuthStore = defineStore("auth", {
         }
         return this.userId;
       } catch {
-        this.userId = null;
-        this.token = null;
-        localStorage.removeItem("userId");
-        localStorage.removeItem("token");
+        this.clearAuth();
       }
     },
     async login(credentials) {
