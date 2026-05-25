@@ -28,7 +28,7 @@
           />
         </div>
 
-        <template v-else>
+        <template>
           <div class="profile-hero">
             <q-avatar size="92px" class="profile-avatar">
               {{ profileInitial }}
