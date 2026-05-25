@@ -14,7 +14,7 @@
         <div v-if="loading" class="profile-state">
           <q-spinner color="positive" size="42px" />
         </div>
-
+{{error}}
         <div v-else-if="error" class="profile-state">
           <q-icon name="error_outline" size="42px" color="negative" />
           <div class="state-title">Profile unavailable</div>
@@ -28,7 +28,7 @@
           />
         </div>
 
-        <template v-else>
+        <div v-else>
           <div class="profile-hero">
             <q-avatar size="92px" class="profile-avatar">
               {{ profileInitial }}
@@ -50,7 +50,7 @@
               @click="logout"
             />
           </div>
-        </template>
+        </div>
       </q-card>
     </section>
   </q-page>
