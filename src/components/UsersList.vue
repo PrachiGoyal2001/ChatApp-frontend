@@ -18,7 +18,7 @@
         <q-item-label class="text-body2">
           {{ user.otherUser.username }}
         </q-item-label>
-        <q-item-label class="text-body2" v-if="user.lastMessage">
+        <q-item-label class="text-body2 last-message" v-if="user.lastMessage">
           {{ user.lastMessage?.text }}
         </q-item-label>
       </q-item-section>
@@ -138,6 +138,13 @@ onMounted(async() => {
 /* Last Message */
 .user-item .text-body2 {
   color: #94a3b8;
+}
+
+.last-message {
+  max-width: 155px; /* adjust as needed */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .avatar {
