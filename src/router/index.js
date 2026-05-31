@@ -38,11 +38,19 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore();
 
-    if (!auth.token && to.path !== "/login" && to.path !== "/register") {
-      next("/login");
-    } else {
-      next();
+    const isAuthPage = ["/login", "/register"].includes(to.path);
+
+    // Not logged in and trying to access a protected page
+    if (!auth.token && !isAuthPage) {
+      return next("/login");
     }
+
+    // Logged in and trying to access login/register
+    if (auth.token && isAuthPage) {
+      return next("/");
+    }
+
+    next();
   });
 
   return router;

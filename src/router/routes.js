@@ -1,4 +1,5 @@
 import MainLayout from "../layouts/MainLayout.vue";
+import LoginLayout from "../layouts/LoginLayout.vue";
 import IndexPage from "../pages/IndexPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import ProfilePage from "../pages/ProfilePage.vue";
@@ -17,20 +18,26 @@ const routes = [
         children: [{ path: ":userId", component: SelectedUserPage }],
       },
       {
-        path: "/login",
-        component: LoginPage,
-      },
-      {
-        path: "/register",
-        component: RegisterPage,
-      },
-      {
         path: "/profile",
         component: ProfilePage,
       },
       {
         path: "/search",
         component: SearchPage,
+      },
+    ],
+  },
+  {
+    path: "/",
+    component: LoginLayout,
+    children: [
+      {
+        path: "login",
+        component: LoginPage,
+      },
+      {
+        path: "register",
+        component: RegisterPage,
       },
     ],
   },

@@ -19,6 +19,11 @@ export const useUserStore = defineStore("user", {
   },
 
   actions: {
+    clearSelectedUserId(){
+      this.selectedUserId = null;
+      this.selectedUserName = null;
+      this.conversationId = null;
+    },
     async getUsers() {
       const { data } = await userService.fetchUsers();
       this.users = data;
@@ -56,6 +61,22 @@ export const useUserStore = defineStore("user", {
       } catch (err) {
         console.error("Fetch messages error:", err);
       }
+    },
+    async fetchSelectedUserMessages(userId){
+      await this.getUsers();
+      const selectedUser = this.users.find(
+        (curr) => curr.otherUser._id === userId
+      );
+      if (!selectedUser) return;
+      const userDetails = {
+        conversationId: selectedUser._id,
+        username: selectedUser.otherUser.username,
+      };
+
+      this.setSelectedUser({
+        ...userDetails,
+        userId,
+      });
     },
     updateLastMessage({ userId, message, time }) {
       const index = this.users.findIndex((u) => u.otherUser._id === userId);
@@ -97,6 +118,24 @@ export const useUserStore = defineStore("user", {
         });
       }
       if (otherUserId !== this.selectedUserId) {
+        // const isExistingUser = this.users.findIndex(
+        //   (curr) => curr.otherUser._id === otherUserId
+        // );
+        // if(isExistingUser === -1){
+        //   this.users.unshift({
+        //     otherUser: {
+        //       email:,
+        //       username:,
+        //       _id: data.conversationId,
+        //     },
+        //     lastMessage:{
+        //       createdAt:data.createdAt,
+        //       sender:data.sender,
+        //       text:data.text,
+        //     },
+        //     unreadCount:0,
+        //   })
+        // }
         this.updateUnseenMessageCount(otherUserId);
       }
       this.updateLastMessage({

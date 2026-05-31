@@ -10,7 +10,7 @@
       round
       class="back-btn q-mr-sm"
       v-if="$q.screen.lt.md"
-      @click="$router.push('/')"
+      @click="showUsersList()"
     />
 
     <q-avatar size="42px" text-color="white" class="chat-icon">
@@ -172,19 +172,20 @@
       </div>
 
       <!-- Send Button -->
-      <q-btn round icon="send" class="send-btn q-ml-sm" @click="handleSend" />
+      <q-btn round icon="send" class="send-btn q-ml-sm" :disable="isSending" @click="handleSend" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
 import { useUploadStore } from "../stores/upload";
 import { useSocket } from "../composables/useSocket";
 import { scrollToBottom } from "../utils";
 import AttachmentPreview from "../components/AttachmentPreview.vue";
+import {useRouter, useRoute} from "vue-router";
 
 const {
   sendMessage,
@@ -196,23 +197,31 @@ const {
 const auth = useAuthStore();
 const userStore = useUserStore();
 const uploadStore = useUploadStore();
+const router = useRouter();
+const route = useRoute();
 const emit = defineEmits(["start-call"]);
 
 const userMessage = ref("");
 const selectedFiles = ref([]);
 const filePicker = ref(null);
+const isSending = ref(false);
 
 const loggedInUserId = computed(() => auth.userId);
 const conversationId = computed(() => userStore.conversationId);
 const selectedUserId = computed(() => userStore.selectedUserId);
 const getSelectedUsername = computed(() => userStore.getSelectedUsername);
 const selectedUserInitial = computed(() => {
-  return getSelectedUsername.value?.charAt(0)?.toUpperCase() || "?";
+  return getSelectedUsername.value?.charAt(0)?.toUpperCase();
 });
 const isSelectedUserOnline = computed(() =>
   onlineUsers.value.has(selectedUserId.value),
 );
 const messages = computed(() => userStore.messages || []);
+
+const showUsersList = ()=>{
+  userStore.clearSelectedUserId();
+  router.push('/');
+}
 
 const startAudioCall = async () => {
   emit("start-call", false);
@@ -238,8 +247,9 @@ const removeSelectedFile = (index) => {
 
 // Send message
 const handleSend = async () => {
-  if (!userMessage.value.trim() && !selectedFiles.value.length) return;
+  if (isSending.value || (!userMessage.value.trim() && !selectedFiles.value.length)) return;
 
+  isSending.value = true;
   const text = userMessage.value;
 
 try {
@@ -283,10 +293,18 @@ try {
   userMessage.value = "";
   } catch (err) {
     console.error("Send failed", err);
+  } finally {
+    isSending.value = false;
   }
 };
 
 watch(messages,scrollToBottom,{deep:true});
+
+onMounted(()=>{
+  if(!userStore.selectedUserId){
+    userStore.fetchSelectedUserMessages(route.params.userId);
+  }
+})
 </script>
 
 <style scoped>
@@ -418,10 +436,6 @@ watch(messages,scrollToBottom,{deep:true});
   background: rgba(34, 197, 94, 0.35);
 }
 
-/* =========================
-   CHAT BUBBLES
-========================= */
-
 .chat-bubble {
   padding: 10px 14px;
   border-radius: 14px;
@@ -482,8 +496,6 @@ watch(messages,scrollToBottom,{deep:true});
   color: #94a3b8;
 }
 
-/* Remove Quasar background */
-
 .message-input :deep(.q-field__control),
 .message-input :deep(.q-field__native) {
   background: transparent !important;
@@ -499,15 +511,12 @@ watch(messages,scrollToBottom,{deep:true});
 
 .attach-btn:hover {
   color: #22c55e;
-
   background: rgba(34, 197, 94, 0.1);
-
   transform: rotate(-12deg);
 }
 .send-btn {
   width: 48px;
   height: 48px;
-
   background: linear-gradient(135deg,#22c55e,#16a34a);
   color: white;
   transition: all 0.25s ease;
@@ -532,8 +541,6 @@ watch(messages,scrollToBottom,{deep:true});
   display: flex;
   flex-direction: column;
   gap: 8px;
-
-  margin-bottom: 6px;
 }
 
 .attachment-item {
@@ -541,10 +548,10 @@ watch(messages,scrollToBottom,{deep:true});
 }
 .chat-image {
   width: 100%;
+  height: 1005;
   max-width: 320px;
   border-radius: 12px;
-  object-fit: cover;
-
+  object-fit: contain;
   cursor: pointer;
   transition: transform 0.25s ease;
 }
@@ -552,7 +559,6 @@ watch(messages,scrollToBottom,{deep:true});
 .chat-video {
   width: 100%;
   max-width: 320px;
-
   border-radius: 12px;
 }
 

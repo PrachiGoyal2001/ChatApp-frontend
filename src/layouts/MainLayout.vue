@@ -1,17 +1,13 @@
 <template>
   <q-layout view="lHh Lpr lFf" class="app-bg">
-    <q-header elevated class="header" v-if="!($q.screen.lt.md && route.params.userId)">
+    <q-header
+      elevated
+      class="header"
+      v-if="!($q.screen.lt.md && route.params.userId)"
+    >
       <q-toolbar>
         <q-toolbar-title color="white"> Chat App </q-toolbar-title>
-        <q-btn
-          round
-          dense
-          flat
-          icon="search"
-          to="/search"
-          class="header-btn"
-          v-if="!isAuthPage"
-        />
+        <q-btn round dense flat icon="search" to="/search" class="header-btn" />
         <q-btn
           round
           dense
@@ -19,23 +15,61 @@
           icon="account_circle"
           to="/profile"
           class="header-btn"
-          v-if="!isAuthPage"
         />
       </q-toolbar>
     </q-header>
     <q-page-container>
       <router-view />
     </q-page-container>
+    <GlobalCallManager />
   </q-layout>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { onMounted, watch, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
+import { useAuthStore } from "../stores/auth";
+import { useUserStore } from "../stores/user";
+import { useCallStore } from "../stores/callStore";
+import { useSocket } from "src/composables/useSocket";
+import GlobalCallManager from "../components/GlobalCallManager.vue";
 
+const authStore = useAuthStore();
+const userStore = useUserStore();
+const callStore = useCallStore();
 const route = useRoute();
+const { connect, onMessage } = useSocket();
+let unsubscribe;
 
-const isAuthPage = computed(() => ["/register", "/login"].includes(route.path));
+const connectSocket = (userId) => {
+  if (!userId) return;
+  authStore.checkAuth();
+  connect(userId);
+};
+
+watch(
+  () => authStore.userId,
+  (userId) => {
+    connectSocket(userId);
+    unsubscribe = onMessage((data) => {
+      userStore.handleIncomingMessage(data);
+    });
+  },
+);
+
+onMounted(() => {
+  if (authStore.userId) {
+    connectSocket(authStore.userId);
+    unsubscribe = onMessage((data) => {
+      userStore.handleIncomingMessage(data);
+    });
+  }
+});
+
+onUnmounted(() => {
+  unsubscribe && unsubscribe();
+  callStore.cleanupCall();
+});
 </script>
 
 <style scoped>
