@@ -337,7 +337,6 @@ export const useCallStore = defineStore("call", () => {
       navigator.mediaSession.metadata = null;
       navigator.mediaSession.playbackState = "none";
     }
-    console.log("Ringtone stopped", ringtoneAudio.value.src);
   };
 
   const startRingtone = () => {
@@ -375,14 +374,6 @@ export const useCallStore = defineStore("call", () => {
   };
 
   const attachRemoteStream = (stream) => {
-    console.log("Remote stream received", stream);
-    console.log("Audio tracks:", stream.getAudioTracks());
-    console.log(
-      "Video tracks:",
-      stream.getVideoTracks(),
-      remoteAudio.value,
-      remoteVideo.value,
-    );
     remoteStream.value = stream;
     callStatus.value = "Connected";
     stopRingtone();
@@ -553,7 +544,7 @@ export const useCallStore = defineStore("call", () => {
   };
   const handleIceCandidate = async (data) => {
     try {
-      console.log("handle ICE candidate", data?.candidate);
+      console.log("Received ICE candidate", data);
       if (!data?.candidate) return;
 
       if (peerConnection?.remoteDescription) {
@@ -592,7 +583,6 @@ export const useCallStore = defineStore("call", () => {
   });
 
   watch(callAccepted, async (data) => {
-    console.log("call Accepted", data);
     if (!data || !peerConnection) return;
     stopRingtone();
     clearUnansweredCallTimer();
