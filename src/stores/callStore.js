@@ -104,7 +104,7 @@ export const useCallStore = defineStore("call", () => {
         if (activeCallUserId.value) {
           endCall({ to: activeCallUserId.value });
         }
-
+        console.log("in start Call, cleanupcall");
         cleanupCall();
       });
 
@@ -211,8 +211,8 @@ export const useCallStore = defineStore("call", () => {
 
     if (to) {
       endCall({ to });
-    }
-
+    } 
+    console.log("in end call cleanupcall")
     cleanupCall();
   };
 
@@ -300,6 +300,7 @@ export const useCallStore = defineStore("call", () => {
   };
 
   const cleanupCall = () => {
+    console.log("cleanupCall");
     stopRingtone();
     clearUnansweredCallTimer();
     peerConnection?.close();
@@ -568,6 +569,7 @@ export const useCallStore = defineStore("call", () => {
       });
       return;
     }
+    console.log("in incomung call", cleanupCall);
     cleanupCall();
     currentCallData.value = data;
     activeCallUserId.value = data.from;
@@ -578,6 +580,7 @@ export const useCallStore = defineStore("call", () => {
       if (currentCallData.value?.from) {
         rejectCall({ to: currentCallData.value.from });
       }
+      console.log("in incomung call startUnansweredCallTimer", cleanupCall);
       cleanupCall();
     });
   });
@@ -638,6 +641,7 @@ export const useCallStore = defineStore("call", () => {
     }
     setTimeout(() => {
       if (rejected) {
+        console.log("in rejected, cleanup call");
         cleanupCall();
       }
     }, 1000);
@@ -645,6 +649,7 @@ export const useCallStore = defineStore("call", () => {
 
   watch(callEnded, (ended) => {
     if (ended) {
+        console.log("in rejected, ended call");
       cleanupCall();
     }
   });
