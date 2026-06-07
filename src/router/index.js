@@ -1,5 +1,6 @@
 import { defineRouter } from "#q-app/wrappers";
 import { useAuthStore } from "../stores/auth";
+import { useCallStore } from "../stores/callStore";
 import {
   createRouter,
   createMemoryHistory,
@@ -37,8 +38,17 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   // Navigation guard
   router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore();
+    const callStore = useCallStore();
 
     const isAuthPage = ["/login", "/register"].includes(to.path);
+
+    if (callStore.isCallActive) {
+      const shouldLeave = await callStore.confirmActiveCallRouteLeave();
+
+      if (!shouldLeave) {
+        return next(false);
+      }
+    }
 
     // Not logged in and trying to access a protected page
     if (!auth.token && !isAuthPage) {

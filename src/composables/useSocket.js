@@ -202,8 +202,8 @@ export const useSocket = () => {
     /**
      * Call Rejected
      */
-    socket.on("call_rejected", () => {
-      callRejected.value = { at: Date.now() };
+    socket.on("call_rejected", (data) => {
+      callRejected.value = { at: Date.now(), ...data };
       activeCall.value = false;
     });
 

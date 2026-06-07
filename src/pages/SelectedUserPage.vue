@@ -43,9 +43,8 @@
       icon="call"
       class="header-action-btn"
       @click="startAudioCall"
-    >
-      <q-tooltip class="bg-dark">Audio Call</q-tooltip>
-    </q-btn>
+      :disable='isBusy'
+    />
 
     <!-- Video Call -->
     <q-btn
@@ -55,9 +54,8 @@
       icon="videocam"
       class="header-action-btn"
       @click="startVideoCall"
-    >
-      <q-tooltip class="bg-dark">Video Call</q-tooltip>
-    </q-btn>
+      :disable="isBusy"
+    />
   </div>
 </div>
     <div class="messages-wrapper">
@@ -74,10 +72,31 @@
         >
           <div
             class="chat-bubble"
-            :class="msg.sender === loggedInUserId ? 'sent' : 'received'"
+            :class="[
+              msg.sender === loggedInUserId ? 'sent' : 'received',
+              { 'call-bubble': msg.messageType === 'call' },
+            ]"
           >
+            <div v-if="msg.messageType === 'call'" class="call-message">
+              <q-icon
+                :name="msg.call?.type === 'video' ? 'videocam' : 'call'"
+                class="call-message-icon"
+              />
+              <div>
+                <div class="call-message-title">
+                  {{ msg.call?.type === 'video' ? 'Video call' : 'Voice call' }}
+                </div>
+                <div class="call-message-subtitle">
+                  {{ msg.sender === loggedInUserId ? 'Outgoing' : 'Incoming' }}
+                </div>
+              </div>
+            </div>
+
             <!-- Attachments -->
-            <div v-if="msg.files?.length" class="attachments-container">
+            <div
+              v-if="msg.messageType !== 'call' && msg.files?.length"
+              class="attachments-container"
+            >
               <div
                 v-for="(fileItem, fileIndex) in msg.files"
                 :key="fileIndex"
@@ -121,7 +140,7 @@
             </div>
 
             <!-- Text -->
-            <div v-if="msg.text" class="message-text">
+            <div v-if="msg.messageType !== 'call' && msg.text" class="message-text">
               {{ msg.text }}
             </div>
           </div>
@@ -172,7 +191,14 @@
       </div>
 
       <!-- Send Button -->
-      <q-btn round icon="send" class="send-btn q-ml-sm" :disable="isSending" @click="handleSend" />
+      <q-btn
+        round
+        icon="send"
+        class="send-btn q-ml-sm"
+        :disable="isSending"
+        @pointerdown.prevent="handleSend"
+        @click="handleSend"
+      />
     </div>
   </div>
 </template>
@@ -181,6 +207,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useUserStore } from "../stores/user";
+import { useCallStore } from "../stores/callStore";
 import { useUploadStore } from "../stores/upload";
 import { useSocket } from "../composables/useSocket";
 import { scrollToBottom } from "../utils";
@@ -197,6 +224,7 @@ const {
 const auth = useAuthStore();
 const userStore = useUserStore();
 const uploadStore = useUploadStore();
+const callStore = useCallStore();
 const router = useRouter();
 const route = useRoute();
 const emit = defineEmits(["start-call"]);
@@ -205,6 +233,7 @@ const userMessage = ref("");
 const selectedFiles = ref([]);
 const filePicker = ref(null);
 const isSending = ref(false);
+let lastPointerSendAt = 0;
 
 const loggedInUserId = computed(() => auth.userId);
 const conversationId = computed(() => userStore.conversationId);
@@ -217,6 +246,7 @@ const isSelectedUserOnline = computed(() =>
   onlineUsers.value.has(selectedUserId.value),
 );
 const messages = computed(() => userStore.messages || []);
+const isBusy = computed(()=> callStore.isBusy);
 
 const showUsersList = ()=>{
   userStore.clearSelectedUserId();
@@ -247,9 +277,14 @@ const removeSelectedFile = (index) => {
 
 // Send message
 const handleSend = async () => {
+  const now = Date.now();
+
+  if (now - lastPointerSendAt < 350) return;
+
   if (isSending.value || (!userMessage.value.trim() && !selectedFiles.value.length)) return;
 
   isSending.value = true;
+  lastPointerSendAt = now;
   const text = userMessage.value;
 
 try {
@@ -463,6 +498,43 @@ onMounted(()=>{
   white-space: pre-wrap;
 
   word-break: break-word;
+}
+
+.call-bubble {
+  min-width: 190px;
+}
+
+.call-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.call-message-icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: white;
+  font-size: 19px;
+}
+
+.call-message-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.call-message-subtitle {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.received .call-message-subtitle {
+  color: #94a3b8;
 }
 .input-box {
   padding: 12px;

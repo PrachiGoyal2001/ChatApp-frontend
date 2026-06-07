@@ -47,17 +47,14 @@
       preload="auto"
     ></audio>
     <DisconnectCallDialog
-      v-model="showDisconnectDialog"
-      @confirm="confirmRouteLeave"
-      @cancel="cancelRouteLeave"
+      v-model="callStore.showDisconnectDialog"
+      @confirm="callStore.confirmRouteLeave"
+      @cancel="callStore.cancelRouteLeave"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
-// import { storeToRefs } from "pinia";
-import { onBeforeRouteLeave } from "vue-router";
 import { useCallStore } from "src/stores/callStore";
 import { useSocket } from "../composables/useSocket";
 import IncomingCallScreen from "src/components/IncomingCallScreen.vue";
@@ -65,43 +62,13 @@ import CallScreen from "src/components/CallScreen.vue";
 import ringtoneUrl from "../assets/audio/ms_teams_ringtone.mp3";
 import DisconnectCallDialog from "src/components/DisconnectCallDialog.vue";
 
-let pendingRouteLeaveResolver = null;
-
 const {
   onIceCandidate,
 } = useSocket();
 
 const callStore = useCallStore();
-const showDisconnectDialog = ref(false);
 
 onIceCandidate(callStore.handleIceCandidate);
-
-onBeforeRouteLeave(() => {
-    console.log("onBeforeRouteLeave", callStore.isCallActive);
-  if (!callStore.isCallActive) return true;
-
-  showDisconnectDialog.value = true;
-
-  return new Promise((resolve) => {
-    pendingRouteLeaveResolver = resolve;
-  });
-});
-
-const confirmRouteLeave = () => {
-  showDisconnectDialog.value = false;
-  callStore.handleEndCall();
-  resolvePendingRouteLeave(true);
-};
-
-const cancelRouteLeave = () => {
-  showDisconnectDialog.value = false;
-  resolvePendingRouteLeave(false);
-};
-
-const resolvePendingRouteLeave = (shouldLeave) => {
-  pendingRouteLeaveResolver?.(shouldLeave);
-  pendingRouteLeaveResolver = null;
-};
 </script>
 
 <style scoped>

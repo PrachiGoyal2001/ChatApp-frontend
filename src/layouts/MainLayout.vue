@@ -3,7 +3,7 @@
     <q-header
       elevated
       class="header"
-      v-if="!($q.screen.lt.md && route.params.userId)"
+      v-if="callStore.isCallActive || !($q.screen.lt.md && route.params.userId)"
     >
       <q-toolbar>
         <q-toolbar-title color="white"> Chat App </q-toolbar-title>
@@ -77,6 +77,7 @@ onUnmounted(() => {
   background: radial-gradient(circle at 20% 20%, #020617, #020617 80%);
 }
 .header {
+  z-index: 10000;
   background: linear-gradient(
     90deg,
     rgba(15, 23, 42, 0.98),
