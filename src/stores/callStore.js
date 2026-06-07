@@ -569,7 +569,7 @@ export const useCallStore = defineStore("call", () => {
       });
       return;
     }
-    console.log("in incomung call", cleanupCall);
+    console.log("in incomung call", "cleanupCall");
     cleanupCall();
     currentCallData.value = data;
     activeCallUserId.value = data.from;
@@ -580,7 +580,7 @@ export const useCallStore = defineStore("call", () => {
       if (currentCallData.value?.from) {
         rejectCall({ to: currentCallData.value.from });
       }
-      console.log("in incomung call startUnansweredCallTimer", cleanupCall);
+      console.log("in incomung call startUnansweredCallTimer", "cleanupCall");
       cleanupCall();
     });
   });
