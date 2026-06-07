@@ -4,6 +4,7 @@ import { useUserStore } from "./user";
 import { useAuthStore } from "./auth";
 import { useSocket } from "../composables/useSocket.js";
 import { useWebRtc } from "../services/webrtc";
+import ringtoneUrl from "../assets/audio/ms_teams_ringtone.mp3";
 
 export const useCallStore = defineStore("call", () => {
   const {
@@ -324,9 +325,25 @@ export const useCallStore = defineStore("call", () => {
     activeCallUserId.value = null;
   };
 
+  const stopRingtone = () => {
+    if (!ringtoneAudio.value) return;
+
+    ringtoneAudio.value.pause();
+    ringtoneAudio.value.currentTime = 0;
+    ringtoneAudio.value.removeAttribute("src");
+    ringtoneAudio.value.load();
+
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+    }
+    console.log("Ringtone stopped", ringtoneAudio.value.src);
+  };
+
   const startRingtone = () => {
     if (!ringtoneAudio.value) return;
 
+    ringtoneAudio.value.src = ringtoneUrl;
     ringtoneAudio.value.currentTime = 0;
     ringtoneAudio.value.play?.().catch((err) => {
       console.warn("Ringtone playback was blocked by the browser:", err);
@@ -345,13 +362,6 @@ export const useCallStore = defineStore("call", () => {
     unansweredCallTimer = null;
   };
 
-  const stopRingtone = () => {
-    if (!ringtoneAudio.value) return;
-
-    ringtoneAudio.value.pause();
-    ringtoneAudio.value.currentTime = 0;
-  };
-
   const applyCameraState = () => {
     localStream.value?.getVideoTracks().forEach((track) => {
       track.enabled = !isCameraOff.value;
@@ -367,7 +377,12 @@ export const useCallStore = defineStore("call", () => {
   const attachRemoteStream = (stream) => {
     console.log("Remote stream received", stream);
     console.log("Audio tracks:", stream.getAudioTracks());
-    console.log("Video tracks:", stream.getVideoTracks(), remoteAudio.value, remoteVideo.value);
+    console.log(
+      "Video tracks:",
+      stream.getVideoTracks(),
+      remoteAudio.value,
+      remoteVideo.value,
+    );
     remoteStream.value = stream;
     callStatus.value = "Connected";
     stopRingtone();
@@ -577,6 +592,7 @@ export const useCallStore = defineStore("call", () => {
   });
 
   watch(callAccepted, async (data) => {
+    console.log("call Accepted", data);
     if (!data || !peerConnection) return;
     stopRingtone();
     clearUnansweredCallTimer();
