@@ -7,11 +7,11 @@ const configuration = {
     {
       urls: "stun:stun.l.google.com:19302",
     },
-    // {
-    //   urls: "turn:free.expressturn.com:3478",
-    //   username: "000000002096194080",
-    //   credential: "OZL9hIbrABhytR4LXzjLivoF5d0=",
-    // },
+    {
+      urls: "turn:free.expressturn.com:3478",
+      username: "000000002096194080",
+      credential: "OZL9hIbrABhytR4LXzjLivoF5d0=",
+    },
   ],
 };
 

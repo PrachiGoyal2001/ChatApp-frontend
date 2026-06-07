@@ -365,6 +365,9 @@ export const useCallStore = defineStore("call", () => {
   };
 
   const attachRemoteStream = (stream) => {
+    console.log("Remote stream received", stream);
+    console.log("Audio tracks:", stream.getAudioTracks());
+    console.log("Video tracks:", stream.getVideoTracks(), remoteAudio.value, remoteVideo.value);
     remoteStream.value = stream;
     callStatus.value = "Connected";
     stopRingtone();
@@ -533,30 +536,31 @@ export const useCallStore = defineStore("call", () => {
   const setCallStatus = (status) => {
     callStatus.value = status;
   };
-  const handleIceCandidate = async(data) => {
-      try {
-        if (!data?.candidate) return;
+  const handleIceCandidate = async (data) => {
+    try {
+      console.log("handle ICE candidate", data?.candidate);
+      if (!data?.candidate) return;
 
-        if (peerConnection?.remoteDescription) {
-          await peerConnection.addIceCandidate(
-            new RTCIceCandidate(data.candidate),
-          );
-        } else {
-          pendingIceCandidates.push(data.candidate);
-        }
-      } catch (err) {
-        console.error("ICE candidate error:", err);
+      if (peerConnection?.remoteDescription) {
+        await peerConnection.addIceCandidate(
+          new RTCIceCandidate(data.candidate),
+        );
+      } else {
+        pendingIceCandidates.push(data.candidate);
       }
+    } catch (err) {
+      console.error("ICE candidate error:", err);
+    }
   };
 
   watch(incomingCall, (data) => {
     if (!data) return;
-    if(isBusy.value){
-      rejectCall({ 
+    if (isBusy.value) {
+      rejectCall({
         to: data.from,
-        reason:"busy",
-       });
-       return;
+        reason: "busy",
+      });
+      return;
     }
     cleanupCall();
     currentCallData.value = data;
@@ -623,9 +627,9 @@ export const useCallStore = defineStore("call", () => {
   });
 
   watch(callRejected, (rejected) => {
-     if (rejected?.reason === "busy") {
+    if (rejected?.reason === "busy") {
       callStatus.value = "User is busy";
-    } 
+    }
     setTimeout(() => {
       if (rejected) {
         cleanupCall();
