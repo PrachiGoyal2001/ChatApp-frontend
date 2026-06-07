@@ -39,7 +39,7 @@
       @accept="callStore.handleAcceptCall"
       @reject="callStore.handleRejectCall"
     />
-    <audio :ref="callStore.remoteAudio" autoplay playsinline></audio>
+    <audio :ref="callStore.setRemoteAudio" autoplay playsinline></audio>
     <audio
       :ref="callStore.setRingToneAudio"
       :src="ringtoneUrl"

@@ -521,6 +521,9 @@ export const useCallStore = defineStore("call", () => {
   const setRingToneAudio = (el) => {
     ringtoneAudio.value = el;
   };
+  const setRemoteAudio = (el) => {
+    remoteAudio.value = el;
+  };
   const setRemoteVideo = (el) => {
     remoteVideo.value = el;
   };
@@ -671,6 +674,7 @@ export const useCallStore = defineStore("call", () => {
     flushPendingIceCandidates,
     cleanupCall,
     setRingToneAudio,
+    setRemoteAudio,
     setRemoteVideo,
     setLocalVideo,
     setCallStatus,

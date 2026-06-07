@@ -36,6 +36,14 @@ export const useWebRtc = () => {
       }
     };
 
+    peerConnection.oniceconnectionstatechange = () => {
+      console.log("ICE connection state:", peerConnection.iceConnectionState);
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+      console.log("Peer connection state:", peerConnection.connectionState);
+    };
+
     peerConnection.ontrack = (event) => {
       if (event.streams?.[0]) {
         event.streams[0].getTracks().forEach((track) => {
