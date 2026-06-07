@@ -21,6 +21,8 @@ export const useWebRtc = () => {
 
     const peerConnection = new RTCPeerConnection(configuration);
 
+    console.log("peer Connection", peerConnection, localStream.value);
+
     if (!localStream.value) {
       throw new Error("Local media stream is not available.");
     }
@@ -35,6 +37,9 @@ export const useWebRtc = () => {
         onIceCandidate(event.candidate);
       }
     };
+
+    console.log("perr connection", peerConnection);
+
 
     peerConnection.oniceconnectionstatechange = () => {
       console.log("ICE connection state:", peerConnection.iceConnectionState);
