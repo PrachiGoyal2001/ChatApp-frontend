@@ -43,11 +43,13 @@ export const useCallStore = defineStore("call", () => {
   const ringtoneAudio = ref(null);
   const remoteVideo = ref(null);
   const localVideo = ref(null);
+  const showDisconnectDialog = ref(false);
 
   const UNANSWERED_CALL_TIMEOUT = 30000;
   const pendingIceCandidates = [];
 
   let unansweredCallTimer = null;
+  let pendingRouteLeaveResolver = null;
 
   const authStore = useAuthStore();
   const userStore = useUserStore();
@@ -77,6 +79,10 @@ export const useCallStore = defineStore("call", () => {
 
   const isCallConnected = computed(() => callStatus.value === "Connected");
   const isCallActive = computed(() => showCallScreen.value);
+
+  const isBusy = computed(() => {
+    return showIncomingCall.value || showCallScreen.value;
+  });
 
   const startCall = async (video = false) => {
     try {
@@ -209,6 +215,32 @@ export const useCallStore = defineStore("call", () => {
     cleanupCall();
   };
 
+  const confirmRouteLeave = () => {
+    showDisconnectDialog.value = false;
+    handleEndCall();
+    resolvePendingRouteLeave(false);
+  };
+
+  const cancelRouteLeave = () => {
+    showDisconnectDialog.value = false;
+    resolvePendingRouteLeave(false);
+  };
+
+  const confirmActiveCallRouteLeave = () => {
+    if (!isCallActive.value) return true;
+
+    showDisconnectDialog.value = true;
+
+    return new Promise((resolve) => {
+      pendingRouteLeaveResolver = resolve;
+    });
+  };
+
+  const resolvePendingRouteLeave = (shouldLeave) => {
+    pendingRouteLeaveResolver?.(shouldLeave);
+    pendingRouteLeaveResolver = null;
+  };
+
   const toggleMic = () => {
     isMicMuted.value = !isMicMuted.value;
     applyMicState();
@@ -283,6 +315,7 @@ export const useCallStore = defineStore("call", () => {
 
     showCallScreen.value = false;
     showIncomingCall.value = false;
+    showDisconnectDialog.value = false;
     isSwitchingToVideo.value = false;
     isMicMuted.value = false;
     isCameraOff.value = false;
@@ -512,9 +545,16 @@ export const useCallStore = defineStore("call", () => {
         console.error("ICE candidate error:", err);
       }
   };
+
   watch(incomingCall, (data) => {
     if (!data) return;
-
+    if(isBusy.value){
+      rejectCall({ 
+        to: data.from,
+        reason:"busy",
+       });
+       return;
+    }
     cleanupCall();
     currentCallData.value = data;
     activeCallUserId.value = data.from;
@@ -531,7 +571,6 @@ export const useCallStore = defineStore("call", () => {
 
   watch(callAccepted, async (data) => {
     if (!data || !peerConnection) return;
-
     stopRingtone();
     clearUnansweredCallTimer();
     setCallStatus("Connecting securely...");
@@ -581,9 +620,14 @@ export const useCallStore = defineStore("call", () => {
   });
 
   watch(callRejected, (rejected) => {
-    if (rejected) {
-      cleanupCall();
-    }
+     if (rejected?.reason === "busy") {
+      callStatus.value = "User is busy";
+    } 
+    setTimeout(() => {
+      if (rejected) {
+        cleanupCall();
+      }
+    }, 1000);
   });
 
   watch(callEnded, (ended) => {
@@ -598,6 +642,7 @@ export const useCallStore = defineStore("call", () => {
     isMicMuted,
     isCameraOff,
     callStatus,
+    showDisconnectDialog,
     currentCallData,
     activeCallUserId,
     activeCallName,
@@ -607,10 +652,14 @@ export const useCallStore = defineStore("call", () => {
     pendingIceCandidates,
     ringtoneAudio,
     incomingCallerName,
+    isBusy,
     startCall,
     handleAcceptCall,
     handleRejectCall,
     handleEndCall,
+    confirmRouteLeave,
+    cancelRouteLeave,
+    confirmActiveCallRouteLeave,
     toggleMic,
     toggleVideo,
     switchToVideoCall,

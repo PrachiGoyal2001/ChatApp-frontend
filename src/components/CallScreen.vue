@@ -148,10 +148,15 @@ const endCall = () => {
 
 <style scoped>
 .call-screen {
-  position: absolute;
-  inset: 0;
+  --app-header-height: 50px;
 
-  z-index: 9999;
+  position: fixed;
+  top: var(--app-header-height);
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  z-index: 9998;
 
   display: flex;
   flex-direction: column;
@@ -168,6 +173,8 @@ const endCall = () => {
 
   backdrop-filter: blur(20px);
 
+  height: calc(100dvh - var(--app-header-height));
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -205,7 +212,7 @@ const endCall = () => {
 /* Top */
 
 .call-top {
-  padding: 32px 24px 0;
+  padding: 24px 24px 0;
   text-align: center;
 }
 
@@ -368,6 +375,18 @@ const endCall = () => {
 /* Mobile */
 
 @media (max-width: 600px) {
+  .call-screen {
+    height: calc(100dvh - var(--app-header-height));
+  }
+
+  .call-top {
+    padding-top: 16px;
+  }
+
+  .call-center {
+    min-height: 0;
+  }
+
   .caller-avatar {
     width: 100px !important;
     height: 100px !important;
@@ -381,6 +400,7 @@ const endCall = () => {
 
   .call-controls {
     gap: 14px;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
 
   .call-control-btn {

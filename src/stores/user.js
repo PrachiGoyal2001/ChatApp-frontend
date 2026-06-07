@@ -101,46 +101,42 @@ export const useUserStore = defineStore("user", {
       if (index === -1) return;
       this.users[index].unreadCount = 0;
     },
-    handleIncomingMessage(data) {
+    async handleIncomingMessage(data) {
       const myId = this.authStore.userId;
+      const files = data.files || [];
 
       const otherUserId = data.sender === myId ? data.receiver : data.sender;
+      const knownUserIndex = this.users.findIndex(
+        (user) => user.otherUser?._id === otherUserId,
+      );
 
       if (otherUserId === this.selectedUserId) {
         this.addMessage({
           _id: data._id,
           text: data.text,
           sender: data.sender,
-          files: data.files,
+          files,
+          messageType: data.messageType,
+          call: data.call,
         });
         messageService.markAsRead({
           conversationId: this.conversationId,
         });
       }
-      if (otherUserId !== this.selectedUserId) {
-        // const isExistingUser = this.users.findIndex(
-        //   (curr) => curr.otherUser._id === otherUserId
-        // );
-        // if(isExistingUser === -1){
-        //   this.users.unshift({
-        //     otherUser: {
-        //       email:,
-        //       username:,
-        //       _id: data.conversationId,
-        //     },
-        //     lastMessage:{
-        //       createdAt:data.createdAt,
-        //       sender:data.sender,
-        //       text:data.text,
-        //     },
-        //     unreadCount:0,
-        //   })
-        // }
-        this.updateUnseenMessageCount(otherUserId);
+
+      if (knownUserIndex === -1) {
+        await this.getUsers();
       }
+
+      if (otherUserId !== this.selectedUserId) {
+        if (knownUserIndex !== -1) {
+          this.updateUnseenMessageCount(otherUserId);
+        }
+      }
+
       this.updateLastMessage({
         userId: otherUserId,
-        message: data.text || (data.files.length && data.files[data.files.length-1].fileName),
+        message: data.text || (files.length && files[files.length-1].fileName),
         time: data.createdAt,
       });
     },
