@@ -302,13 +302,15 @@ export const useCallStore = defineStore("call", () => {
     }
   };
 
-  const cleanupCall = () => {
+  const cleanupCall = ({ keepPendingIceCandidates = false } = {}) => {
     console.log("cleanupCall");
     stopRingtone();
     clearUnansweredCallTimer();
     peerConnection?.close();
     peerConnection = null;
-    pendingIceCandidates.length = 0;
+    if (!keepPendingIceCandidates) {
+      pendingIceCandidates.length = 0;
+    }
 
     localStream.value?.getTracks().forEach((track) => track.stop());
     localStream.value = null;
@@ -586,7 +588,7 @@ export const useCallStore = defineStore("call", () => {
       return;
     }
     console.log("in incomung call", "cleanupCall");
-    cleanupCall();
+    cleanupCall({ keepPendingIceCandidates: true });
     currentCallData.value = data;
     activeCallUserId.value = data.from;
     isVideoCall.value = data.isVideoCall;
