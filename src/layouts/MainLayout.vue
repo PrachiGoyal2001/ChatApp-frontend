@@ -68,7 +68,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   unsubscribe && unsubscribe();
-  console.log("in unmounted", "cleanupCall");
   callStore.cleanupCall();
 });
 </script>

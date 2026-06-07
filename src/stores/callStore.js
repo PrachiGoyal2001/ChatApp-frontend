@@ -104,7 +104,6 @@ export const useCallStore = defineStore("call", () => {
         if (activeCallUserId.value) {
           endCall({ to: activeCallUserId.value });
         }
-        console.log("in start Call, cleanupcall");
         cleanupCall();
       });
 
@@ -122,7 +121,6 @@ export const useCallStore = defineStore("call", () => {
           attachRemoteStream(stream);
         },
       );
-      console.log("NEW PEER CONNECTION CREATED", peerConnection);
       const offer = await peerConnection.createOffer();
 
       await peerConnection.setLocalDescription(offer);
@@ -172,8 +170,6 @@ export const useCallStore = defineStore("call", () => {
         },
       );
 
-      console.log("NEW PEER CONNECTION CREATED2", peerConnection);
-
       await peerConnection.setRemoteDescription(
         new RTCSessionDescription(currentCallData.value.offer),
       );
@@ -215,7 +211,6 @@ export const useCallStore = defineStore("call", () => {
     if (to) {
       endCall({ to });
     }
-    console.log("in end call cleanupcall");
     cleanupCall();
   };
 
@@ -303,7 +298,6 @@ export const useCallStore = defineStore("call", () => {
   };
 
   const cleanupCall = ({ keepPendingIceCandidates = false } = {}) => {
-    console.log("cleanupCall");
     stopRingtone();
     clearUnansweredCallTimer();
     peerConnection?.close();
@@ -550,27 +544,13 @@ export const useCallStore = defineStore("call", () => {
   };
   const handleIceCandidate = async (data) => {
     try {
-      console.log(
-        "Adding candidate. Remote description exists?",
-        !!peerConnection?.remoteDescription,
-      );
-      console.log("CURRENT PEER CONNECTION", peerConnection);
-
-      console.log(
-        "PeerConnection state:",
-        peerConnection?.connectionState,
-        peerConnection?.iceConnectionState,
-        peerConnection?.signalingState,
-      );
       if (!data?.candidate) return;
 
       if (peerConnection?.remoteDescription) {
         await peerConnection.addIceCandidate(
           new RTCIceCandidate(data.candidate),
         );
-        console.log("ICE candidate added successfully");
       } else {
-        console.log("Queueing ICE candidate");
         pendingIceCandidates.push(data.candidate);
       }
     } catch (err) {
@@ -587,7 +567,6 @@ export const useCallStore = defineStore("call", () => {
       });
       return;
     }
-    console.log("in incomung call", "cleanupCall");
     cleanupCall({ keepPendingIceCandidates: true });
     currentCallData.value = data;
     activeCallUserId.value = data.from;
@@ -598,7 +577,6 @@ export const useCallStore = defineStore("call", () => {
       if (currentCallData.value?.from) {
         rejectCall({ to: currentCallData.value.from });
       }
-      console.log("in incomung call startUnansweredCallTimer", "cleanupCall");
       cleanupCall();
     });
   });
@@ -659,7 +637,6 @@ export const useCallStore = defineStore("call", () => {
     }
     setTimeout(() => {
       if (rejected) {
-        console.log("in rejected, cleanup call");
         cleanupCall();
       }
     }, 1000);
@@ -667,7 +644,6 @@ export const useCallStore = defineStore("call", () => {
 
   watch(callEnded, (ended) => {
     if (ended) {
-      console.log("in rejected, ended call");
       cleanupCall();
     }
   });
